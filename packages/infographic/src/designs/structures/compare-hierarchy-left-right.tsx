@@ -17,7 +17,7 @@ export interface CompareHierarchyLeftRightProps extends BaseStructureProps {
   /** 同侧数据项上下间隔 */
   gap?: number;
   /** 左右两侧间隔 */
-  spacing?: number;
+  groupGap?: number;
   /** 子节点是否环绕根节点 */
   surround?: boolean;
   /** 数据项指示器样式 */
@@ -43,7 +43,7 @@ export const CompareHierarchyLeftRight: ComponentType<
     Items,
     data,
     gap = 20,
-    spacing = 0,
+    groupGap = 0,
     decoration = 'none',
     surround = true,
     flipRoot = false,
@@ -90,7 +90,7 @@ export const CompareHierarchyLeftRight: ComponentType<
   const decorationWidth = decorationWidthMap[decoration] || 0;
   // create root items
   const leftRootX = itemBounds.width + decorationWidth;
-  const rightRootX = leftRootX + rootItemBounds.width + spacing;
+  const rightRootX = leftRootX + rootItemBounds.width + groupGap;
   const rootY = (totalHeight - rootItemBounds.height) / 2;
   if (leftRoot) {
     itemElements.push(
@@ -137,10 +137,10 @@ export const CompareHierarchyLeftRight: ComponentType<
   };
 
   if (surround) {
-    const diameter = 2 * rootItemBounds.width + spacing + itemBounds.width;
+    const diameter = 2 * rootItemBounds.width + groupGap + itemBounds.width;
     const radius = diameter / 2 + decorationWidth;
 
-    const circleCenterX = leftRootX + rootItemBounds.width + spacing / 2;
+    const circleCenterX = leftRootX + rootItemBounds.width + groupGap / 2;
     const circleCenterY = rootY + rootItemBounds.height / 2;
 
     leftItems.forEach((item, index) => {

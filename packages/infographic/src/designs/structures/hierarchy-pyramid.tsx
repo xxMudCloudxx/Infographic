@@ -14,7 +14,7 @@ export interface HierarchyPyramidProps extends BaseStructureProps {
 export const HierarchyPyramid: ComponentType<HierarchyPyramidProps> = (
   props,
 ) => {
-  const { Title, Item, data, gap = 20, levelGap = 60 } = props;
+  const { Title, Item, data, gap = 20, levelGap = 20 } = props;
   const { title, desc, items = [] } = data;
 
   const titleContent = Title ? <Title title={title} desc={desc} /> : null;

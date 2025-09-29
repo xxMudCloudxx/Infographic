@@ -33,7 +33,7 @@ export const Pyramid: ComponentType<PyramidProps> = (props) => {
       width = 300,
       height = 60,
       iconSize = 30,
-      pyramidWidth = width / 2,
+      pyramidWidth = width * 0.6,
       themeColors,
     },
     restProps,

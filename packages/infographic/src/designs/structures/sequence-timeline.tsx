@@ -1,9 +1,15 @@
 /** @jsxImportSource @antv/infographic-jsx */
 import type { ComponentType, JSXElement } from '@antv/infographic-jsx';
-import { Ellipse, getElementBounds, Group, Path } from '@antv/infographic-jsx';
+import {
+  Ellipse,
+  getElementBounds,
+  Group,
+  Path,
+  Text,
+} from '@antv/infographic-jsx';
 import { BtnAdd, BtnRemove, BtnsGroup, ItemsGroup } from '../components';
 import { FlexLayout } from '../layouts';
-import { getColorPrimary } from '../utils';
+import { getColorPrimary, getPaletteColors } from '../utils';
 import { registerStructure } from './registry';
 import type { BaseStructureProps } from './types';
 
@@ -12,15 +18,38 @@ export interface SequenceTimelineProps extends BaseStructureProps {
   lineOffset?: number;
 }
 
+const STEP_LABELS = [
+  'STEP ONE',
+  'STEP TWO',
+  'STEP THREE',
+  'STEP FOUR',
+  'STEP FIVE',
+  'STEP SIX',
+  'STEP SEVEN',
+  'STEP EIGHT',
+  'STEP NINE',
+  'STEP TEN',
+  'STEP ELEVEN',
+  'STEP TWELVE',
+  'STEP THIRTEEN',
+  'STEP FOURTEEN',
+  'STEP FIFTEEN',
+  'STEP SIXTEEN',
+  'STEP SEVENTEEN',
+  'STEP EIGHTEEN',
+  'STEP NINETEEN',
+  'STEP TWENTY',
+];
+
 export const SequenceTimeline: ComponentType<SequenceTimelineProps> = (
   props,
 ) => {
-  const { Title, Item, data, gap = 40, lineOffset = 60, options } = props;
+  const { Title, Item, data, gap = 10, options } = props;
   const { title, desc, items = [] } = data;
 
-  const colorPrimary = getColorPrimary(options);
   const titleContent = Title ? <Title title={title} desc={desc} /> : null;
-
+  const colorPrimary = getColorPrimary(options);
+  const palette = getPaletteColors(options);
   const btnBounds = getElementBounds(<BtnAdd indexes={[0]} />);
   const itemBounds = getElementBounds(
     <Item indexes={[0]} data={data} datum={items[0]} positionH="normal" />,
@@ -30,14 +59,50 @@ export const SequenceTimeline: ComponentType<SequenceTimelineProps> = (
   const itemElements: JSXElement[] = [];
   const decorElements: JSXElement[] = [];
 
-  const timelineX = lineOffset;
+  const stepLabelX = 10;
+  const timelineX = stepLabelX + 120 + 20;
   const itemX = timelineX + 30;
   const nodeRadius = 6;
+
+  // Add continuous timeline line first (so it appears behind the dots)
+  if (items.length > 1) {
+    const firstNodeY = itemBounds.height / 2 + nodeRadius;
+    const lastNodeY =
+      (items.length - 1) * (itemBounds.height + gap) +
+      itemBounds.height / 2 -
+      nodeRadius;
+    const continuousLinePath = `M ${timelineX} ${firstNodeY} L ${timelineX} ${lastNodeY}`;
+
+    decorElements.push(
+      <Path
+        d={continuousLinePath}
+        stroke={colorPrimary}
+        strokeWidth={2}
+        width={1}
+        height={lastNodeY - firstNodeY}
+      />,
+    );
+  }
 
   items.forEach((item, index) => {
     const itemY = index * (itemBounds.height + gap);
     const nodeY = itemY + itemBounds.height / 2;
     const indexes = [index];
+
+    decorElements.push(
+      <Text
+        x={stepLabelX}
+        y={nodeY}
+        width={130}
+        fontSize={18}
+        fontWeight="bold"
+        alignHorizontal="left"
+        alignVertical="center"
+        fill={palette[index % palette.length]}
+      >
+        {STEP_LABELS[index] || `STEP ${index + 1}`}
+      </Text>,
+    );
 
     itemElements.push(
       <Item
@@ -56,7 +121,7 @@ export const SequenceTimeline: ComponentType<SequenceTimelineProps> = (
         y={nodeY - nodeRadius}
         width={nodeRadius * 2}
         height={nodeRadius * 2}
-        fill={colorPrimary}
+        fill={palette[index % palette.length]}
       />,
     );
 
@@ -86,26 +151,6 @@ export const SequenceTimeline: ComponentType<SequenceTimelineProps> = (
       );
     }
   });
-
-  // Add continuous timeline line
-  if (items.length > 1) {
-    const firstNodeY = itemBounds.height / 2 + nodeRadius;
-    const lastNodeY =
-      (items.length - 1) * (itemBounds.height + gap) +
-      itemBounds.height / 2 -
-      nodeRadius;
-    const continuousLinePath = `M ${timelineX} ${firstNodeY} L ${timelineX} ${lastNodeY}`;
-
-    decorElements.push(
-      <Path
-        d={continuousLinePath}
-        stroke={colorPrimary}
-        strokeWidth={2}
-        width={1}
-        height={lastNodeY - firstNodeY}
-      />,
-    );
-  }
 
   if (items.length > 0) {
     const lastItemY = (items.length - 1) * (itemBounds.height + gap);
