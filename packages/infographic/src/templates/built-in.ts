@@ -325,6 +325,41 @@ const BUILT_IN_TEMPLATES: Record<string, TemplateOptions> = {
       items: [{ type: 'letter-card' }, { type: 'rounded-rect-node' }],
     },
   },
+  'sequence-snake-steps-compact-card': {
+    design: {
+      title: 'default',
+      structure: { type: 'sequence-snake-steps' },
+      items: [{ type: 'compact-card' }],
+    },
+  },
+  'sequence-snake-steps-pill-badge': {
+    design: {
+      title: 'default',
+      structure: { type: 'sequence-snake-steps' },
+      items: [{ type: 'pill-badge' }],
+    },
+  },
+  'sequence-snake-steps-simple': {
+    design: {
+      title: 'default',
+      structure: { type: 'sequence-snake-steps' },
+      items: [{ type: 'simple' }],
+    },
+  },
+  'sequence-color-snake-steps-horizontal-icon-line': {
+    design: {
+      title: 'default',
+      structure: { type: 'sequence-color-snake-steps' },
+      items: [{ type: 'horizontal-icon-line' }],
+    },
+  },
+  'list-row-horizontal-icon-line': {
+    design: {
+      title: 'default',
+      structure: { type: 'list-row', gap: 0 },
+      items: [{ type: 'horizontal-icon-line' }],
+    },
+  },
 };
 
 Object.entries(BUILT_IN_TEMPLATES).forEach(([name, options]) => {

@@ -1,11 +1,8 @@
 /** @jsxImportSource @antv/infographic-jsx */
-import type {
-  ComponentType,
-  JSXElement,
-  RectProps,
-} from '@antv/infographic-jsx';
-import { Defs, getElementBounds, Group, Polygon } from '@antv/infographic-jsx';
+import type { ComponentType, JSXElement } from '@antv/infographic-jsx';
+import { getElementBounds, Group } from '@antv/infographic-jsx';
 import { BtnAdd, BtnRemove, BtnsGroup, ItemsGroup } from '../components';
+import { SimpleArrow } from '../decorations';
 import { FlexLayout } from '../layouts';
 import { getColorPrimary } from '../utils';
 import { registerStructure } from './registry';
@@ -80,7 +77,7 @@ export const SequenceSteps: ComponentType<SequenceStepsProps> = (props) => {
       const arrowY = topMargin + itemBounds.height / 2 - arrowHeight / 2;
 
       decorElements.push(
-        <Arrow
+        <SimpleArrow
           x={arrowX}
           y={arrowY}
           width={arrowWidth}
@@ -116,54 +113,6 @@ export const SequenceSteps: ComponentType<SequenceStepsProps> = (props) => {
         <BtnsGroup>{btnElements}</BtnsGroup>
       </Group>
     </FlexLayout>
-  );
-};
-
-const Arrow = ({
-  width = 25,
-  height = 25,
-  colorPrimary = '#6699FF',
-  ...rest
-}: RectProps & {
-  colorPrimary: string;
-}) => {
-  const strokeId = `gradient-arrow-stroke-${colorPrimary.replace('#', '')}`;
-  const fillId = `gradient-arrow-fill-${colorPrimary.replace('#', '')}`;
-
-  const shaftWidth = Math.round(width * 0.515);
-  const shaftTop = Math.round(height * 0.275);
-  const shaftBottom = Math.round(height * 0.875);
-  const points = [
-    { x: 0, y: shaftTop }, // 左上角
-    { x: shaftWidth, y: shaftTop }, // 柄部右上角
-    { x: shaftWidth, y: height * 0.075 }, // 箭头上顶点
-    { x: width, y: height * 0.575 }, // 箭头尖端
-    { x: shaftWidth, y: height * 1.075 }, // 箭头下顶点
-    { x: shaftWidth, y: shaftBottom }, // 柄部右下角
-    { x: 0, y: shaftBottom }, // 左下角
-  ];
-
-  return (
-    <>
-      <Polygon
-        {...rest}
-        width={width}
-        height={height}
-        points={points}
-        fill={`url(#${fillId})`}
-        stroke={`url(#${strokeId})`}
-      />
-      <Defs>
-        <linearGradient id={fillId} x1="100%" y1="0%" x2="0%" y2="0%">
-          <stop offset="0%" stop-color={colorPrimary} stop-opacity="0.36" />
-          <stop offset="100%" stop-color={colorPrimary} stop-opacity="0" />
-        </linearGradient>
-        <linearGradient id={strokeId} x1="100%" y1="0%" x2="0%" y2="0%">
-          <stop offset="0%" stop-color={colorPrimary} />
-          <stop offset="58%" stop-color={colorPrimary} stop-opacity="0" />
-        </linearGradient>
-      </Defs>
-    </>
   );
 };
 

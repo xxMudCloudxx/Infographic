@@ -7,6 +7,7 @@ export * from './CircularProgress';
 export * from './CompactCard';
 export * from './DoneList';
 export * from './HorizontalIconArrow';
+export * from './HorizontalIconLine';
 export * from './IconBadge';
 export * from './LCornerCard';
 export * from './LetterCard';

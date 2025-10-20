@@ -12,6 +12,8 @@ export * from './registry';
 export * from './relation-circle';
 export * from './relation-network';
 export * from './sequence-ascending-steps';
+export * from './sequence-color-snake-steps';
+export * from './sequence-snake-steps';
 export * from './sequence-steps';
 export * from './sequence-timeline';
 export type * from './types';
