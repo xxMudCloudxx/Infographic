@@ -1,6 +1,7 @@
 import {InfographicOptions, Infographic as Renderer} from '@antv/infographic';
 import {useTheme} from 'hooks/useTheme';
 import {
+  CSSProperties,
   forwardRef,
   useCallback,
   useEffect,
@@ -11,6 +12,8 @@ import {
 
 export type InfographicHandle = {
   copyToClipboard: () => Promise<boolean>;
+  exportPNG: () => Promise<void>;
+  exportSVG: () => Promise<void>;
 };
 
 export const Infographic = forwardRef<
@@ -19,8 +22,11 @@ export const Infographic = forwardRef<
     options: Partial<InfographicOptions> | string;
     init?: Partial<InfographicOptions>;
     onError?: (error: Error | null) => void;
+    enableEditor?: boolean;
+    className?: string;
+    style?: CSSProperties;
   }
->(({init, onError, options}, ref) => {
+>(({init, onError, options, enableEditor = false, className, style}, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<Renderer | null>(null);
   const theme = useTheme();
@@ -39,6 +45,7 @@ export const Infographic = forwardRef<
             height: '100%',
           },
         },
+        editable: enableEditor,
         ...init,
       });
     }
@@ -64,7 +71,7 @@ export const Infographic = forwardRef<
       const error = e instanceof Error ? e : new Error(String(e));
       onError?.(error);
     }
-  }, [init, onError, options, isDark]);
+  }, [init, onError, options, isDark, enableEditor]);
 
   useEffect(() => {
     return () => {
@@ -107,19 +114,85 @@ export const Infographic = forwardRef<
     }
   }, []);
 
+  const getFilename = useCallback((extension: string) => {
+    const instance = instanceRef.current;
+    if (!instance) return `infographic-${Date.now()}.${extension}`;
+
+    try {
+      const options = instance.getOptions();
+      const title = options?.data?.title;
+      if (title && typeof title === 'string') {
+        // Sanitize title for filename (remove invalid characters)
+        const sanitized = title.replace(/[<>:"/\\|?*]/g, '-').trim();
+        return `${sanitized}.${extension}`;
+      }
+    } catch (e) {
+      console.error('Error getting filename from title:', e);
+    }
+
+    return `infographic-${Date.now()}.${extension}`;
+  }, []);
+
+  const handleExportPNG = useCallback(async () => {
+    const instance = instanceRef.current;
+    if (!instance) return;
+
+    try {
+      const dataUrl = await instance.toDataURL();
+      if (!dataUrl) return;
+
+      // Create download link
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = getFilename('png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error('PNG export error', e);
+    }
+  }, [getFilename]);
+
+  const handleExportSVG = useCallback(async () => {
+    const instance = instanceRef.current;
+    if (!instance) return;
+
+    try {
+      const svgDataUrl = await instance.toDataURL({type: 'svg'});
+      if (!svgDataUrl) return;
+
+      // Convert data URL to blob
+      const response = await fetch(svgDataUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = getFilename('svg');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('SVG export error', e);
+    }
+  }, [getFilename]);
+
   useImperativeHandle(
     ref,
     () => ({
       copyToClipboard: handleCopy,
+      exportPNG: handleExportPNG,
+      exportSVG: handleExportSVG,
     }),
-    [handleCopy]
+    [handleCopy, handleExportPNG, handleExportSVG]
   );
 
   return (
     <div
-      className="w-full h-full"
+      className={['w-full h-full', className].filter(Boolean).join(' ')}
       ref={containerRef}
       onDoubleClick={handleCopy}
+      style={style}
     />
   );
 });

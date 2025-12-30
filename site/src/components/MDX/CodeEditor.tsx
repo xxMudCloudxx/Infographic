@@ -7,13 +7,16 @@ import {
   indentWithTab,
 } from '@codemirror/commands';
 import {javascript} from '@codemirror/lang-javascript';
+import {yaml} from '@codemirror/lang-yaml';
 import {
   HighlightStyle,
   bracketMatching,
   foldGutter,
   indentOnInput,
+  indentUnit,
   syntaxHighlighting,
 } from '@codemirror/language';
+import {linter, type Diagnostic} from '@codemirror/lint';
 import {EditorState, Extension} from '@codemirror/state';
 import {
   EditorView,
@@ -32,6 +35,48 @@ import {useEffect, useMemo, useRef} from 'react';
 import {CustomTheme} from './Sandpack/Themes';
 
 export type CodeMirrorLanguage = 'json' | 'javascript' | 'yaml' | 'plaintext';
+
+// Custom newline handler that preserves indentation
+function smartNewline(view: EditorView): boolean {
+  const {state} = view;
+  const {selection} = state;
+  const changes = selection.ranges.map((range) => {
+    const line = state.doc.lineAt(range.from);
+    const text = line.text;
+
+    // Calculate current line's indentation
+    const indent = text.match(/^\s*/)?.[0] || '';
+
+    // Check if cursor is at the end of the line
+    const isAtLineEnd = range.from === line.to;
+
+    // Keywords that should trigger increased indentation when at line end
+    const indentKeywords = /^\s*(data|items|theme|design|palette)$/;
+
+    let newIndent = indent;
+
+    // If at end of line and matches indent keywords, add one level of indentation
+    if (isAtLineEnd && indentKeywords.test(text)) {
+      newIndent = indent + '  '; // Add 2 spaces
+    }
+
+    return {
+      from: range.from,
+      to: range.to,
+      insert: '\n' + newIndent,
+    };
+  });
+
+  view.dispatch({
+    changes,
+    selection: {
+      anchor: selection.ranges[0].from + 1 + (changes[0].insert.length - 1),
+    },
+    scrollIntoView: true,
+  });
+
+  return true;
+}
 
 const syntaxTheme = HighlightStyle.define([
   {tag: tags.keyword, color: 'var(--sp-syntax-color-keyword)'},
@@ -102,6 +147,7 @@ export function CodeEditor({
   onChange,
   readOnly = false,
   value,
+  linterFn,
 }: {
   ariaLabel?: string;
   className?: string;
@@ -109,6 +155,7 @@ export function CodeEditor({
   onChange: (next: string) => void;
   readOnly?: boolean;
   value: string;
+  linterFn?: (view: EditorView) => Diagnostic[];
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -125,10 +172,16 @@ export function CodeEditor({
 
   const languageExtension = useMemo<Extension>(() => {
     if (language === 'plaintext') return [];
+    if (language === 'yaml') return yaml();
     return language === 'javascript'
       ? javascript({jsx: true, typescript: false})
       : javascript({jsx: false, typescript: false});
   }, [language]);
+
+  const linterExtension = useMemo<Extension>(() => {
+    if (!linterFn) return [];
+    return linter(linterFn);
+  }, [linterFn]);
 
   useEffect(() => {
     if (!containerRef.current) {
@@ -143,13 +196,20 @@ export function CodeEditor({
       history(),
       drawSelection(),
       dropCursor(),
+      indentUnit.of('  '), // 2 spaces for YAML/JS
       indentOnInput(),
       syntaxHighlighting(syntaxTheme, {fallback: true}),
       bracketMatching(),
       EditorState.allowMultipleSelections.of(true),
       highlightActiveLine(),
-      keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+      keymap.of([
+        {key: 'Enter', run: smartNewline},
+        ...defaultKeymap,
+        ...historyKeymap,
+        indentWithTab,
+      ]),
       languageExtension,
+      linterExtension,
       editorTheme,
       ...(readOnly
         ? [EditorState.readOnly.of(true), EditorView.editable.of(false)]
@@ -176,7 +236,7 @@ export function CodeEditor({
       view.destroy();
       viewRef.current = null;
     };
-  }, [languageExtension, readOnly]);
+  }, [languageExtension, linterExtension, readOnly]);
 
   useEffect(() => {
     const view = viewRef.current;
