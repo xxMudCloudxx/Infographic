@@ -33,6 +33,10 @@ const PERCENT_TEXT_POSITION = 0.5;
 const DELETE_BUTTON_RADIUS_FACTOR = 0.85;
 /** 添加按钮半径系数：相对于外半径的比例 */
 const ADD_BUTTON_RADIUS_FACTOR = 1.0;
+/** 连线透明度 */
+const CONNECTOR_STROKE_OPACITY = 0.45;
+/** 连线宽度 */
+const CONNECTOR_STROKE_WIDTH = 2;
 
 export interface ChartPieProps extends BaseStructureProps {
   radius?: number;
@@ -298,8 +302,8 @@ export const ChartPie: ComponentType<ChartPieProps> = (props) => {
         L${centerX + p3[0]} ${centerY + p3[1]}
         `}
         stroke={color}
-        strokeOpacity={0.45}
-        strokeWidth={2}
+        strokeOpacity={CONNECTOR_STROKE_OPACITY}
+        strokeWidth={CONNECTOR_STROKE_WIDTH}
         fill="none"
         data-element-type="shape"
       />,
