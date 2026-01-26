@@ -1,49 +1,23 @@
 import Editor from '@monaco-editor/react';
 import { Button, Card, Checkbox, ColorPicker, Form, Select } from 'antd';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { Infographic } from './Infographic';
+import { useKeyboardNavigation } from './hooks/useKeyboardNavigation';
 import { usePreviewData } from './hooks/usePreviewData';
 import { usePreviewInteractions } from './hooks/usePreviewInteractions';
 import { usePreviewSettings } from './hooks/usePreviewSettings';
 
 export const Preview = () => {
   const settings = usePreviewSettings();
-  const dataState = usePreviewData(settings.isSettingsHydrated, settings.data);
+  const dataState = usePreviewData(settings.isSettingsHydrated);
   const interactions = usePreviewInteractions(settings, dataState);
 
   // 键盘导航：上下或左右方向键切换模板
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.key === 'ArrowUp' ||
-        e.key === 'ArrowLeft' ||
-        e.key === 'ArrowDown' ||
-        e.key === 'ArrowRight'
-      ) {
-        const currentIndex = settings.templates.indexOf(settings.template);
-        if (currentIndex === -1) return;
-
-        let nextIndex: number;
-
-        if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-          // 上一个模板
-          nextIndex =
-            currentIndex > 0 ? currentIndex - 1 : settings.templates.length - 1;
-        } else {
-          // 下一个模板
-          nextIndex =
-            currentIndex < settings.templates.length - 1 ? currentIndex + 1 : 0;
-        }
-
-        const nextTemplate = settings.templates[nextIndex];
-        interactions.applyTemplate(nextTemplate);
-        e.preventDefault();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [settings.template, settings.templates, interactions.applyTemplate]);
+  useKeyboardNavigation({
+    templates: settings.templates,
+    currentTemplate: settings.template,
+    onTemplateChange: interactions.applyTemplate,
+  });
 
   const handleCopyTemplate = useCallback(async () => {
     try {

@@ -56,7 +56,6 @@ export const usePreviewInteractions = (
       previewData.setCustomData(dataStr);
       previewData.setRenderingDataStr(dataStr);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHydrated]);
 
   // 2. Computed Styles & Configs
@@ -98,26 +97,19 @@ export const usePreviewInteractions = (
       const nextData = getDataByTemplate(nextTemplate);
       const key = resolvePreviewDataKey(nextData) as DataKey;
 
-      const nextSelection = {
-        key: key,
-        data: nextData,
-      };
-
       settings.setTemplate(nextTemplate);
+      settings.setData(key);
 
-      if (nextSelection.key !== settings.data) {
-        settings.setData(nextSelection.key);
-        const nextDataStr = JSON.stringify(nextSelection.data, null, 2);
-        previewData.setCustomData(nextDataStr);
-        previewData.setRenderingDataStr(nextDataStr);
-        // Clear saved custom data because we are switching context
-        previewData.handleClearCustomDataStorage();
-      }
+      // 始终更新数据，不再依赖 key !== settings.data 判断
+      // 修复：切换模板时，即使 DataKey 相同也应该重置数据
+      const nextDataStr = JSON.stringify(nextData, null, 2);
+      previewData.setCustomData(nextDataStr);
+      previewData.setRenderingDataStr(nextDataStr);
+      previewData.handleClearCustomDataStorage();
     },
     [
       settings.setTemplate,
       settings.setData,
-      settings.data,
       previewData.setCustomData,
       previewData.setRenderingDataStr,
       previewData.handleClearCustomDataStorage,

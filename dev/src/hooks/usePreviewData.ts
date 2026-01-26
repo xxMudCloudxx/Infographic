@@ -4,21 +4,19 @@
  * 职责：
  * - 管理 JSON 编辑器中的自定义数据（customData）
  * - 管理用于渲染的数据（renderingDataStr，带 500ms 防抖）
- * - 解析 JSON 并处理解析错误，提供 fallback 数据
+ * - 解析 JSON 并返回解析结果（成功返回数据，失败返回 null）
  * - 持久化/恢复用户编辑的自定义数据到 localStorage
  *
  * 设计考量：
  * - customData: 编辑器实时输入，无延迟
  * - renderingDataStr: 防抖后的数据，用于渲染 Infographic，避免输入时频繁重绘
- * - JSON 解析在 useMemo 中进行，解析失败时 fallback 到当前选中的数据源
+ * - JSON 解析在 useMemo 中进行，解析失败时返回 null，由消费层决定如何处理
  * - 返回对象使用 useMemo 包装，确保引用稳定性
  *
  * @param isReady - 是否可以开始加载（等待 settings hydrate 完成）
- * @param currentDataKey - 当前数据源 key，用于解析失败时的 fallback
  * @returns 数据状态、解析结果和操作函数的稳定对象引用
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DATASET, type DataKey } from '../data';
 import {
   getStoredValues,
   removeStoredValue,
@@ -29,7 +27,6 @@ const CUSTOM_DATA_STORAGE_KEY = 'preview-custom-data';
 
 export const usePreviewData = (
   isReady: boolean, // Allow parent to control when we start (e.g. wait for settings)
-  currentDataKey: DataKey, // Needed for default fallback in parsing error
 ) => {
   // State for custom data
   const [savedDataStr, setSavedDataStr] = useState<string | null>(null);
@@ -87,17 +84,18 @@ export const usePreviewData = (
   }, []);
 
   // Parse rendering data without side effects in useMemo
+  // 注意：解析失败时返回 null，由消费层（UI）决定如何处理
   const { parsedData, parseError } = useMemo(() => {
     try {
       const parsed = JSON.parse(renderingDataStr);
       return { parsedData: parsed, parseError: '' };
     } catch (error) {
       return {
-        parsedData: DATASET[currentDataKey],
+        parsedData: null,
         parseError: error instanceof Error ? error.message : 'Invalid JSON',
       };
     }
-  }, [renderingDataStr, currentDataKey]);
+  }, [renderingDataStr]);
 
   return useMemo(
     () => ({
