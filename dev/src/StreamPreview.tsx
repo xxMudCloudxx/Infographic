@@ -2,6 +2,11 @@ import Editor from '@monaco-editor/react';
 import { Button, Card, Radio, Space } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Infographic } from './Infographic';
+import {
+  getStoredValues,
+  removeStoredValue,
+  setStoredValues,
+} from './utils/storage';
 
 const STREAM_PRESETS = [
   { key: 'slowest', label: '最慢', stepPercent: 1, intervalMs: 160 },
@@ -126,13 +131,53 @@ data
 ];
 
 const getDefaultCode = () => CODE_PRESETS[0].code;
+const STREAM_CODE_STORAGE_KEY = 'stream-preview-code';
 
 export const StreamPreview = () => {
-  const [code, setCode] = useState(getDefaultCode);
+  // Load initial state
+  const savedState = getStoredValues<{ code: string; preset: string }>(
+    STREAM_CODE_STORAGE_KEY,
+  );
+
+  const [savedCodeInfo, setSavedCodeInfo] = useState<{
+    code: string;
+    preset: string;
+  } | null>(savedState);
+
+  const [code, setCode] = useState(() => savedState?.code || getDefaultCode());
+
+  // Explicit debounced code state
+  const [debouncedCode, setDebouncedCode] = useState(code);
+
   const [options, setOptions] = useState(code);
   const [isStreaming, setIsStreaming] = useState(false);
+
+  // Debounce effect: sync code to debouncedCode
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedCode(code);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [code]);
+
+  // Sync debounced code to options when NOT streaming
+  // If streaming, options are controlled by the stream timer
+  useEffect(() => {
+    if (!isStreaming) {
+      setOptions(debouncedCode);
+    }
+  }, [debouncedCode, isStreaming]);
   const [speedPreset, setSpeedPreset] = useState('normal');
-  const [codePreset, setCodePreset] = useState(CODE_PRESETS[0].key);
+  const [codePreset, setCodePreset] = useState(
+    savedState?.preset || CODE_PRESETS[0].key,
+  );
+
+  // Dirty check: Compare current code+preset with saved state
+  const isCodeDirty =
+    !savedCodeInfo ||
+    savedCodeInfo.code !== code ||
+    savedCodeInfo.preset !== codePreset;
+
   const streamTimerRef = useRef<number | null>(null);
   const currentPreset = STREAM_PRESETS.find((item) => item.key === speedPreset);
 
@@ -174,8 +219,10 @@ export const StreamPreview = () => {
       if (!next) return;
       stopStreaming();
       setCodePreset(nextPreset);
-      setCode(next.code);
-      setOptions(next.code);
+      const nextCode = next.code;
+      setCode(nextCode);
+      setDebouncedCode(nextCode); // Immediate update
+      setOptions(nextCode);
     },
     [stopStreaming],
   );
@@ -206,7 +253,41 @@ export const StreamPreview = () => {
             disabled={isStreaming}
           />
         </Card>
-        <Card title="Code Input" size="small">
+        <Card
+          title="Code Input"
+          size="small"
+          extra={
+            <Space size={8}>
+              <Button
+                size="small"
+                type={!isCodeDirty ? 'default' : 'primary'}
+                onClick={() => {
+                  const newState = { code, preset: codePreset };
+                  setStoredValues(STREAM_CODE_STORAGE_KEY, newState);
+                  setSavedCodeInfo(newState);
+                }}
+              >
+                {isCodeDirty ? '保存' : '已保存'}
+              </Button>
+              <Button
+                size="small"
+                danger
+                onClick={() => {
+                  const preset = CODE_PRESETS.find((p) => p.key === codePreset);
+                  if (preset) {
+                    setCode(preset.code);
+                    setDebouncedCode(preset.code); // Immediate update
+                    setOptions(preset.code);
+                  }
+                  removeStoredValue(STREAM_CODE_STORAGE_KEY);
+                  setSavedCodeInfo(null);
+                }}
+              >
+                重置
+              </Button>
+            </Space>
+          }
+        >
           <div style={{ height: 300 }}>
             <Editor
               height="100%"
@@ -220,7 +301,9 @@ export const StreamPreview = () => {
                 scrollBeyondLastLine: false,
                 wordWrap: 'on',
               }}
-              onChange={(value) => setCode(value || '')}
+              onChange={(value) => {
+                setCode(value || '');
+              }}
             />
           </div>
         </Card>

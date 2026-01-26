@@ -5,10 +5,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getDataByTemplate } from '../../shared/get-template-data';
 import { Infographic } from './Infographic';
 import { DATA_KEYS, DATASET, DEFAULT_DATA_KEY, type DataKey } from './data';
-import { getStoredValues, setStoredValues } from './utils/storage';
+import {
+  getStoredValues,
+  removeStoredValue,
+  setStoredValues,
+} from './utils/storage';
 
 const templates = getTemplates();
 const STORAGE_KEY = 'preview-form-values';
+const CUSTOM_DATA_STORAGE_KEY = 'preview-custom-data';
 
 const getDefaultDataString = (key: DataKey) =>
   JSON.stringify(DATASET[key], null, 2);
@@ -59,10 +64,20 @@ export const Preview = () => {
   const [colorPrimary, setColorPrimary] = useState(initialColorPrimary);
   const [enablePrimary, setEnablePrimary] = useState(initialEnablePrimary);
   const [enablePalette, setEnablePalette] = useState(initialEnablePalette);
-  const [customData, setCustomData] = useState<string>(() =>
-    JSON.stringify(initialDataValue, null, 2),
-  );
-  const [dataError, setDataError] = useState<string>('');
+  // State for custom data
+  const [savedDataStr, setSavedDataStr] = useState<string | null>(() => {
+    const saved = getStoredValues<{ data: string }>(CUSTOM_DATA_STORAGE_KEY);
+    return saved?.data || null;
+  });
+
+  const [customData, setCustomData] = useState<string>(() => {
+    return savedDataStr || JSON.stringify(initialDataValue, null, 2);
+  });
+
+  const isDataDirty = useMemo(() => {
+    if (savedDataStr === null) return true; // Not saved yet
+    return customData !== savedDataStr;
+  }, [customData, savedDataStr]);
 
   const themeConfig = useMemo<ThemeConfig | undefined>(() => {
     const config: ThemeConfig = {};
@@ -114,8 +129,9 @@ export const Preview = () => {
       setTemplate(nextTemplate);
       if (nextSelection.key !== data) {
         setData(nextSelection.key);
-        setCustomData(JSON.stringify(nextSelection.data, null, 2));
-        setDataError('');
+        const nextDataStr = JSON.stringify(nextSelection.data, null, 2);
+        setCustomData(nextDataStr);
+        setRenderingDataStr(nextDataStr); // Immediate update to avoid lag
       }
     },
     [data],
@@ -141,17 +157,29 @@ export const Preview = () => {
     }
   };
 
-  // Parse custom data
-  const parsedData = useMemo(() => {
+  // The actual data string used for rendering (debounced from editor, or immediate from selection)
+  const [renderingDataStr, setRenderingDataStr] = useState<string>(customData);
+
+  // Debounce effect: sync customData to renderingDataStr with delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setRenderingDataStr(customData);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [customData]);
+
+  // Parse rendering data without side effects in useMemo
+  const { parsedData, parseError } = useMemo(() => {
     try {
-      const parsed = JSON.parse(customData);
-      setDataError('');
-      return parsed;
+      const parsed = JSON.parse(renderingDataStr);
+      return { parsedData: parsed, parseError: '' };
     } catch (error) {
-      setDataError(error instanceof Error ? error.message : 'Invalid JSON');
-      return DATASET[data];
+      return {
+        parsedData: DATASET[data],
+        parseError: error instanceof Error ? error.message : 'Invalid JSON',
+      };
     }
-  }, [customData, data]);
+  }, [renderingDataStr, data]);
 
   // 键盘导航：上下或左右方向键切换模板
   useEffect(() => {
@@ -245,8 +273,9 @@ export const Preview = () => {
                   }))}
                   onChange={(value) => {
                     setData(value);
-                    setCustomData(getDefaultDataString(value));
-                    setDataError('');
+                    const newDataStr = getDefaultDataString(value);
+                    setCustomData(newDataStr);
+                    setRenderingDataStr(newDataStr); // Immediate update
                   }}
                 />
               </Form.Item>
@@ -298,11 +327,39 @@ export const Preview = () => {
             title="数据编辑器"
             size="small"
             extra={
-              dataError && (
-                <span style={{ color: '#ff4d4f', fontSize: 12 }}>
-                  {dataError}
-                </span>
-              )
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {parseError && (
+                  <span style={{ color: '#ff4d4f', fontSize: 12 }}>
+                    {parseError}
+                  </span>
+                )}
+                <Button
+                  size="small"
+                  type={!isDataDirty ? 'default' : 'primary'}
+                  onClick={() => {
+                    setStoredValues(CUSTOM_DATA_STORAGE_KEY, {
+                      data: customData,
+                    });
+                    setSavedDataStr(customData);
+                  }}
+                >
+                  {isDataDirty ? '保存' : '已保存'}
+                </Button>
+                <Button
+                  size="small"
+                  danger
+                  onClick={() => {
+                    const defaultData = getDefaultDataString(data);
+                    setCustomData(defaultData);
+                    setRenderingDataStr(defaultData); // Immediate update
+                    // 清除保存的数据
+                    removeStoredValue(CUSTOM_DATA_STORAGE_KEY);
+                    setSavedDataStr(null);
+                  }}
+                >
+                  重置
+                </Button>
+              </div>
             }
           >
             <div style={{ height: 300 }}>
@@ -321,7 +378,9 @@ export const Preview = () => {
                   formatOnPaste: true,
                   formatOnType: true,
                 }}
-                onChange={(value) => setCustomData(value || '')}
+                onChange={(value) => {
+                  setCustomData(value || '');
+                }}
               />
             </div>
           </Card>
