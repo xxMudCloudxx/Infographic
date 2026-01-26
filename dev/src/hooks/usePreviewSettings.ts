@@ -73,12 +73,10 @@ export const usePreviewSettings = () => {
   useEffect(() => {
     if (!isSettingsHydrated) return;
 
-    // 清除之前的定时器
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // 300ms 后写入 localStorage
     saveTimeoutRef.current = setTimeout(() => {
       setStoredValues(STORAGE_KEY, {
         template,

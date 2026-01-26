@@ -225,7 +225,8 @@ export const Preview = () => {
           <Infographic
             options={{
               template: settings.template,
-              data: dataState.parsedData,
+              // 如果解析出错 (null)，传空对象防止崩溃，错误提示已在编辑器上方显示
+              data: dataState.parsedData || {},
               theme: settings.theme,
               themeConfig: interactions.themeConfig,
               editable: true,

@@ -56,7 +56,15 @@ export const usePreviewInteractions = (
       previewData.setCustomData(dataStr);
       previewData.setRenderingDataStr(dataStr);
     }
-  }, [isHydrated]);
+  }, [
+    isHydrated,
+    previewData.savedDataStr,
+    previewData.customData,
+    previewData.setCustomData,
+    previewData.setRenderingDataStr,
+    settings.template,
+    settings.data,
+  ]);
 
   // 2. Computed Styles & Configs
   const themeConfig = useMemo<ThemeConfig | undefined>(() => {
@@ -100,8 +108,6 @@ export const usePreviewInteractions = (
       settings.setTemplate(nextTemplate);
       settings.setData(key);
 
-      // 始终更新数据，不再依赖 key !== settings.data 判断
-      // 修复：切换模板时，即使 DataKey 相同也应该重置数据
       const nextDataStr = JSON.stringify(nextData, null, 2);
       previewData.setCustomData(nextDataStr);
       previewData.setRenderingDataStr(nextDataStr);

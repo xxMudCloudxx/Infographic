@@ -41,6 +41,14 @@ export const useKeyboardNavigation = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 避免在于编辑器或输入框中键入时触发导航
+      const target = e.target as HTMLElement;
+      const isInput =
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) ||
+        target.isContentEditable;
+
+      if (isInput) return;
+
       if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
         navigateTemplate('prev');
         e.preventDefault();

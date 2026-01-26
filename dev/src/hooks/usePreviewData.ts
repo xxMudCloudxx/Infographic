@@ -84,7 +84,6 @@ export const usePreviewData = (
   }, []);
 
   // Parse rendering data without side effects in useMemo
-  // 注意：解析失败时返回 null，由消费层（UI）决定如何处理
   const { parsedData, parseError } = useMemo(() => {
     try {
       const parsed = JSON.parse(renderingDataStr);
