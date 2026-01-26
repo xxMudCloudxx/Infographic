@@ -22,62 +22,81 @@ const resolvePreviewDataKey = (data: unknown) =>
   DATA_KEYS.find((key) => DATASET[key] === data) ?? DEFAULT_DATA_KEY;
 
 export const Preview = () => {
-  // Get stored values with validation
-  const storedValues = getStoredValues<{
-    template: string;
-    data: DataKey;
-    theme: 'light' | 'dark' | 'hand-drawn';
-    colorPrimary: string;
-    enablePrimary: boolean;
-    enablePalette: boolean;
-  }>(STORAGE_KEY, (stored) => {
-    const fallbacks: any = {};
+  // SSR safe: initialize with defaults, hydrate in useEffect
+  const [template, setTemplate] = useState(templates[0]);
+  const [data, setData] = useState<DataKey>(DEFAULT_DATA_KEY);
+  const [theme, setTheme] = useState<string>('light');
+  const [colorPrimary, setColorPrimary] = useState('#FF356A');
+  const [enablePrimary, setEnablePrimary] = useState(true);
+  const [enablePalette, setEnablePalette] = useState(false);
 
-    // Validate template
-    if (stored.template && !templates.includes(stored.template)) {
-      fallbacks.template = templates[0];
-    }
-
-    // Validate data
-    const dataKeys = DATA_KEYS;
-    if (stored.data && !dataKeys.includes(stored.data)) {
-      fallbacks.data = dataKeys[0];
-    }
-
-    return fallbacks;
-  });
-
-  const initialTemplate = storedValues?.template || templates[0];
-  const templateData = getDataByTemplate(initialTemplate);
-  const initialData = storedValues?.data || resolvePreviewDataKey(templateData);
-  const initialTheme = storedValues?.theme || 'light';
-  const initialColorPrimary = storedValues?.colorPrimary || '#FF356A';
-  const initialEnablePrimary = storedValues?.enablePrimary ?? true;
-  const initialEnablePalette = storedValues?.enablePalette || false;
-  const initialDataValue = storedValues?.data
-    ? DATASET[initialData]
-    : templateData;
-
-  const [template, setTemplate] = useState(initialTemplate);
-  const [data, setData] = useState<DataKey>(initialData);
-  const [theme, setTheme] = useState<string>(initialTheme);
-  const [colorPrimary, setColorPrimary] = useState(initialColorPrimary);
-  const [enablePrimary, setEnablePrimary] = useState(initialEnablePrimary);
-  const [enablePalette, setEnablePalette] = useState(initialEnablePalette);
-  // State for custom data - SSR safe: initialize with default, hydrate in useEffect
+  // State for custom data
   const [savedDataStr, setSavedDataStr] = useState<string | null>(null);
-  const [customData, setCustomData] = useState<string>(() =>
+  const initialDataValue = getDataByTemplate(templates[0]);
+  const [customData, setCustomData] = useState<string>(
     JSON.stringify(initialDataValue, null, 2),
   );
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Hydrate from localStorage on client mount (SSR safe)
+  // Hydrate all state from localStorage on client mount (SSR safe)
   useEffect(() => {
-    const saved = getStoredValues<{ data: string }>(CUSTOM_DATA_STORAGE_KEY);
-    if (saved?.data) {
-      setSavedDataStr(saved.data);
-      setCustomData(saved.data);
+    // 1. Load form values
+    type FormValues = {
+      template: string;
+      data: DataKey;
+      theme: 'light' | 'dark' | 'hand-drawn';
+      colorPrimary: string;
+      enablePrimary: boolean;
+      enablePalette: boolean;
+    };
+    const storedValues = getStoredValues<FormValues>(STORAGE_KEY, (stored) => {
+      const fallbacks: Partial<FormValues> = {};
+      if (stored.template && !templates.includes(stored.template)) {
+        fallbacks.template = templates[0];
+      }
+      if (stored.data && !DATA_KEYS.includes(stored.data)) {
+        fallbacks.data = DATA_KEYS[0];
+      }
+      return fallbacks;
+    });
+
+    if (storedValues) {
+      if (storedValues.template) setTemplate(storedValues.template);
+      if (storedValues.data) setData(storedValues.data);
+      if (storedValues.theme) setTheme(storedValues.theme);
+      if (storedValues.colorPrimary) setColorPrimary(storedValues.colorPrimary);
+      if (storedValues.enablePrimary !== undefined)
+        setEnablePrimary(storedValues.enablePrimary);
+      if (storedValues.enablePalette !== undefined)
+        setEnablePalette(storedValues.enablePalette);
+
+      // If no custom data saved, derive from restored template/data
+      const saved = getStoredValues<{ data: string }>(CUSTOM_DATA_STORAGE_KEY);
+      if (saved?.data) {
+        setSavedDataStr(saved.data);
+        setCustomData(saved.data);
+        setRenderingDataStr(saved.data);
+      } else {
+        // Derive customData from restored settings
+        const restoredTemplate = storedValues.template || templates[0];
+        const templateData = getDataByTemplate(restoredTemplate);
+        const dataValue = storedValues.data
+          ? DATASET[storedValues.data]
+          : templateData;
+        const dataStr = JSON.stringify(dataValue, null, 2);
+        setCustomData(dataStr);
+        setRenderingDataStr(dataStr);
+      }
+    } else {
+      // No form values stored, just check for custom data
+      const saved = getStoredValues<{ data: string }>(CUSTOM_DATA_STORAGE_KEY);
+      if (saved?.data) {
+        setSavedDataStr(saved.data);
+        setCustomData(saved.data);
+        setRenderingDataStr(saved.data);
+      }
     }
+
     setIsHydrated(true);
   }, []);
 
@@ -125,7 +144,7 @@ export const Preview = () => {
   const templateConfig = useMemo(() => {
     const config = getTemplate(template);
     return config ? JSON.stringify(config, null, 2) : '{}';
-  }, [template]); // Note: removed unused 'data' dependency
+  }, [template, data]);
 
   const applyTemplate = useCallback(
     (nextTemplate: string) => {
