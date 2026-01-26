@@ -19,6 +19,7 @@ export const chartPieTemplates: Record<string, TemplateOptions> = {
       title: 'default',
       structure: {
         type: 'chart-pie',
+        avoidLabelOverlap: true,
       },
       items: [
         {
@@ -32,6 +33,7 @@ export const chartPieTemplates: Record<string, TemplateOptions> = {
       title: 'default',
       structure: {
         type: 'chart-pie',
+        avoidLabelOverlap: true,
       },
       items: [
         {
@@ -60,6 +62,7 @@ export const chartPieTemplates: Record<string, TemplateOptions> = {
       structure: {
         type: 'chart-pie',
         innerRadius: 90,
+        avoidLabelOverlap: true,
       },
       items: [
         {
@@ -74,6 +77,7 @@ export const chartPieTemplates: Record<string, TemplateOptions> = {
       structure: {
         type: 'chart-pie',
         innerRadius: 90,
+        avoidLabelOverlap: true,
       },
       items: [
         {
