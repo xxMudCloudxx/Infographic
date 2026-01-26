@@ -324,8 +324,6 @@ describe('distributeLabels - Spider Leg Layout Algorithm', () => {
 
       // 验证第一个和最后一个标签的位置
       const firstTop = result[0].y - result[0].height / 2;
-      const lastBottom =
-        result[result.length - 1].y + result[result.length - 1].height / 2;
 
       // 算法应该把第一个标签钳制在上边界
       expect(firstTop).toBeGreaterThanOrEqual(-60);
