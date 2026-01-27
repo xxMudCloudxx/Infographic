@@ -1,19 +1,19 @@
-import { getViewBox } from '../../utils/viewbox';
+import { inRange } from 'lodash-es';
+import { calculateZoomedViewBox, getViewBox } from '../../utils/viewbox';
 import { UpdateOptionsCommand } from '../commands';
 import type { IInteraction, InteractionInitOptions } from '../types';
+import { clientToViewport } from '../utils';
 import { Interaction } from './base';
 
-const MIN_VIEWBOX_SIZE = 1;
+const MIN_VIEWBOX_SIZE = 20;
+const MAX_VIEWBOX_SIZE = 2000;
 const ZOOM_FACTOR = 1.1;
 
 export class ZoomWheel extends Interaction implements IInteraction {
   name = 'zoom-wheel';
 
   private wheelListener = (event: WheelEvent) => {
-    if (!this.interaction.isActive()) return;
-    if (!event.ctrlKey && !event.metaKey) return;
-    // Ignore events with zero deltaY (no actual scrolling)
-    if (event.deltaY === 0) return;
+    if (!this.shouldZoom(event)) return;
     event.preventDefault();
 
     // Standard Zoom: Scroll Up (deltaY < 0) = Zoom In
@@ -22,24 +22,63 @@ export class ZoomWheel extends Interaction implements IInteraction {
 
     const svg = this.editor.getDocument();
     const viewBox = getViewBox(svg);
-    const { width, height, x, y } = viewBox;
+    const { width, height } = viewBox;
 
     const newWidth = width * factor;
     const newHeight = height * factor;
 
-    if (newWidth <= MIN_VIEWBOX_SIZE || newHeight <= MIN_VIEWBOX_SIZE) return;
+    if (
+      !inRange(newWidth, MIN_VIEWBOX_SIZE, MAX_VIEWBOX_SIZE) ||
+      !inRange(newHeight, MIN_VIEWBOX_SIZE, MAX_VIEWBOX_SIZE)
+    )
+      return;
 
-    // Center zoom
-    const centerX = x + width / 2;
-    const centerY = y + height / 2;
+    // TODO: Remove after implementing the reset UI plugin
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey) {
+      const command = new UpdateOptionsCommand({
+        viewBox: undefined,
+      });
+      void this.commander.execute(command);
+      return;
+    }
+    const pivot =
+      (event.ctrlKey || event.metaKey) && !event.shiftKey
+        ? this.getMousePoint(svg, event)
+        : this.getCenterPoint(viewBox);
 
-    const newX = centerX - newWidth / 2;
-    const newY = centerY - newHeight / 2;
+    const newViewBox = calculateZoomedViewBox(viewBox, factor, pivot);
 
     const command = new UpdateOptionsCommand({
-      viewBox: `${newX} ${newY} ${newWidth} ${newHeight}`,
+      viewBox: `${newViewBox.x} ${newViewBox.y} ${newViewBox.width} ${newViewBox.height}`,
     });
     void this.commander.execute(command);
+  };
+
+  private getMousePoint = (svg: SVGSVGElement, event: WheelEvent) => {
+    return clientToViewport(svg, event.clientX, event.clientY);
+  };
+
+  private getCenterPoint = (viewBox: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }) => {
+    const centerX = viewBox.x + viewBox.width / 2;
+    const centerY = viewBox.y + viewBox.height / 2;
+    return { x: centerX, y: centerY };
+  };
+
+  private shouldZoom = (event: WheelEvent) => {
+    if (!this.interaction.isActive()) return false;
+    // TODO: Enable after implementing the reset UI plugin
+    // if (!event.ctrlKey && !event.metaKey && !event.shiftKey) return false;
+    if (event.deltaY === 0) return false;
+
+    const isMouseZoom = event.ctrlKey || event.metaKey;
+    const isCenterZoom = event.shiftKey;
+
+    return isMouseZoom || isCenterZoom;
   };
 
   init(options: InteractionInitOptions) {
