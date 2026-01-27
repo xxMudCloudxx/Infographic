@@ -113,7 +113,9 @@ export class StateManager implements IStateManager {
 
   updateOptions(options: ParsedInfographicOptions) {
     this.options = { ...this.options, ...options };
-    if (this.options.padding !== undefined) {
+    if (this.options.viewBox) {
+      this.editor.getDocument().setAttribute('viewBox', this.options.viewBox);
+    } else if (this.options.padding !== undefined) {
       setSVGPadding(
         this.editor.getDocument(),
         parsePadding(this.options.padding),
