@@ -24,3 +24,12 @@ export function calculateZoomedViewBox(
 
   return { x: newX, y: newY, width: newWidth, height: newHeight };
 }
+
+export function viewBoxToString(box: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}): string {
+  return `${box.x} ${box.y} ${box.width} ${box.height}`;
+}

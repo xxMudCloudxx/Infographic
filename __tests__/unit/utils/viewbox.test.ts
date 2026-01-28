@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { calculateZoomedViewBox, getViewBox } from '../../../src/utils/viewbox';
+import {
+  calculateZoomedViewBox,
+  getViewBox,
+  viewBoxToString,
+} from '../../../src/utils/viewbox';
 
 describe('getViewBox', () => {
   it('parses existing viewBox attribute', () => {
@@ -71,5 +75,12 @@ describe('calculateZoomedViewBox', () => {
     const expected = { x: 100, y: 100, width: 50, height: 50 };
 
     expect(calculateZoomedViewBox(current, factor, pivot)).toEqual(expected);
+  });
+});
+
+describe('viewBoxToString', () => {
+  it('formats viewBox object to string', () => {
+    const box = { x: 10, y: 20, width: 200, height: 100 };
+    expect(viewBoxToString(box)).toBe('10 20 200 100');
   });
 });

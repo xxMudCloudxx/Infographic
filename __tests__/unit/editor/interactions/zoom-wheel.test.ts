@@ -2,41 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UpdateOptionsCommand } from '../../../../src/editor/commands/UpdateOptions';
 import { ZoomWheel } from '../../../../src/editor/interactions/zoom-wheel';
 import * as EditorUtils from '../../../../src/editor/utils';
-
-// Polyfill DOMMatrix for JSDOM
-if (typeof globalThis.DOMMatrix === 'undefined') {
-  (globalThis as any).DOMMatrix = class DOMMatrix {
-    a = 1;
-    b = 0;
-    c = 0;
-    d = 1;
-    e = 0;
-    f = 0;
-    inverse() {
-      return new DOMMatrix();
-    }
-  };
-}
-
-// Polyfill DOMPoint for JSDOM (it's not available in JSDOM)
-if (typeof globalThis.DOMPoint === 'undefined') {
-  (globalThis as any).DOMPoint = class DOMPoint {
-    x: number;
-    y: number;
-    z: number;
-    w: number;
-    constructor(x = 0, y = 0, z = 0, w = 1) {
-      this.x = x;
-      this.y = y;
-      this.z = z;
-      this.w = w;
-    }
-    matrixTransform(_matrix?: DOMMatrix): DOMPoint {
-      // For testing, just return the same point (identity transform)
-      return new DOMPoint(this.x, this.y, this.z, this.w);
-    }
-  };
-}
+import '../../../setup/dom-polyfills';
 
 // Helper to create SVG with viewBox attribute
 const createSVG = (viewBox: string) => {

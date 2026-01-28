@@ -1,5 +1,9 @@
 import { inRange } from 'lodash-es';
-import { calculateZoomedViewBox, getViewBox } from '../../utils/viewbox';
+import {
+  calculateZoomedViewBox,
+  getViewBox,
+  viewBoxToString,
+} from '../../utils/viewbox';
 import { UpdateOptionsCommand } from '../commands';
 import type { IInteraction, InteractionInitOptions } from '../types';
 import { clientToViewport } from '../utils';
@@ -49,7 +53,7 @@ export class ZoomWheel extends Interaction implements IInteraction {
     const newViewBox = calculateZoomedViewBox(viewBox, factor, pivot);
 
     const command = new UpdateOptionsCommand({
-      viewBox: `${newViewBox.x} ${newViewBox.y} ${newViewBox.width} ${newViewBox.height}`,
+      viewBox: viewBoxToString(newViewBox),
     });
     void this.commander.execute(command);
   };
