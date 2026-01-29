@@ -1,4 +1,4 @@
-import { getViewBox, viewBoxToString } from '@antv/infographic/utils';
+import { getViewBox, viewBoxToString } from '../../utils';
 import { UpdateOptionsCommand } from '../commands';
 import { IInteraction, InteractionInitOptions } from '../types';
 import { clientToViewport, isTextSelectionTarget } from '../utils';
