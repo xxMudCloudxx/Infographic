@@ -53,6 +53,9 @@ export class SpacebarDrag extends Interaction implements IInteraction {
           this.completeInteraction = resolve;
 
           this.isSpacePressed = true;
+          const viewBox = getViewBox(this.document);
+
+          this.startViewBoxString = viewBoxToString(viewBox);
           this.setCursor('grab');
 
           // Must use capture phase to preemptively intercept events
@@ -73,11 +76,8 @@ export class SpacebarDrag extends Interaction implements IInteraction {
     event.stopPropagation();
 
     const svg = this.document;
-    const viewBox = getViewBox(svg);
     this.startPoint = clientToViewport(svg, event.clientX, event.clientY);
     this.pointerId = event.pointerId;
-
-    this.startViewBoxString = viewBoxToString(viewBox);
 
     this.setCursor('grabbing');
 
