@@ -85,6 +85,7 @@ export class SpacebarDrag extends Interaction implements IInteraction {
 
     window.addEventListener('pointermove', this.handlePointerMove);
     window.addEventListener('pointerup', this.handlePointerUp);
+    window.addEventListener('pointercancel', this.handlePointerUp);
   };
 
   private handlePointerMove = (event: PointerEvent) => {
@@ -117,6 +118,7 @@ export class SpacebarDrag extends Interaction implements IInteraction {
     this.setCursor('grab');
     window.removeEventListener('pointermove', this.handlePointerMove);
     window.removeEventListener('pointerup', this.handlePointerUp);
+    window.removeEventListener('pointercancel', this.handlePointerUp);
   };
 
   private handleKeyUp = (event: KeyboardEvent) => {
@@ -152,6 +154,7 @@ export class SpacebarDrag extends Interaction implements IInteraction {
     this.document.removeEventListener('pointerdown', this.handlePointerDown);
     window.removeEventListener('pointermove', this.handlePointerMove);
     window.removeEventListener('pointerup', this.handlePointerUp);
+    window.removeEventListener('pointercancel', this.handlePointerUp);
 
     this.completeInteraction?.();
     this.completeInteraction = undefined;
