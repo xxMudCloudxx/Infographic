@@ -20,10 +20,15 @@ export class SpacebarDrag extends Interaction implements IInteraction {
 
   private completeInteraction?: () => void;
 
+  // 防止组件快捷键侵入性过强
+  private isHovering = false;
+
   init(options: InteractionInitOptions): void {
     super.init(options);
     this.document = this.editor.getDocument();
 
+    this.document.addEventListener('mouseenter', this.onMouseEnter);
+    this.document.addEventListener('mouseleave', this.onMouseLeave);
     window.addEventListener('keydown', this.handleKeyDown);
     window.addEventListener('blur', this.handleBlur);
   }
@@ -37,15 +42,17 @@ export class SpacebarDrag extends Interaction implements IInteraction {
     window.removeEventListener('pointerup', this.handlePointerUp);
 
     window.removeEventListener('blur', this.handleBlur);
+    this.document.removeEventListener('mouseenter', this.onMouseEnter);
+    this.document.removeEventListener('mouseleave', this.onMouseLeave);
   }
 
   private handleKeyDown = (event: KeyboardEvent) => {
+    if (!this.interaction.isActive()) return;
     if (isTextSelectionTarget(event.target)) return;
     if (event.code !== 'Space') return;
+    if (!this.isHovering && !this.isSpacePressed) return;
     event.preventDefault();
     event.stopPropagation();
-    if (!this.interaction.isActive()) return;
-    if (this.isSpacePressed) return;
     this.interaction.executeExclusiveInteraction(
       this,
       async () =>
@@ -163,5 +170,12 @@ export class SpacebarDrag extends Interaction implements IInteraction {
 
   private handleBlur = () => {
     this.stopDrag();
+  };
+
+  private onMouseEnter = () => {
+    this.isHovering = true;
+  };
+  private onMouseLeave = () => {
+    this.isHovering = false;
   };
 }
