@@ -1,15 +1,33 @@
 import { getViewBox, viewBoxToString } from '../../utils';
 import { UpdateOptionsCommand } from '../commands';
-import { IInteraction, InteractionInitOptions } from '../types';
+import { IInteraction, InteractionInitOptions, KeyCode } from '../types';
 import { clientToViewport, isTextSelectionTarget } from '../utils';
 import { Interaction } from './base';
 
 type CursorType = 'grab' | 'grabbing' | 'default';
+export interface DragCanvasOptions {
+  trigger?: KeyCode[];
+}
 
-export class SpacebarDrag extends Interaction implements IInteraction {
-  name = 'spacebar-drag';
+export class DragCanvas extends Interaction implements IInteraction {
+  name = 'drag-canvas';
 
-  private isSpacePressed = false;
+  /**
+   * 触发交互的按键代码。
+   * 参考标准的 KeyboardEvent.code 值：
+   * https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values
+   * @default ['Space']
+   */
+  public trigger: KeyCode[] = ['Space'];
+
+  constructor(options?: DragCanvasOptions) {
+    super();
+    if (options?.trigger) {
+      this.trigger = options.trigger;
+    }
+  }
+
+  private isTriggerPressed = false;
 
   private pointerId?: number;
   private startPoint?: DOMPoint;
@@ -57,8 +75,8 @@ export class SpacebarDrag extends Interaction implements IInteraction {
     const isEditor = target === this.document || this.document.contains(target);
     if (!isBody && !isEditor) return;
 
-    if (event.code !== 'Space') return;
-    if (!this.isHovering && !this.isSpacePressed) return;
+    if (!this.trigger.includes(event.code)) return;
+    if (!this.isHovering && !this.isTriggerPressed) return;
     event.preventDefault();
     event.stopPropagation();
     this.interaction.executeExclusiveInteraction(
@@ -67,7 +85,7 @@ export class SpacebarDrag extends Interaction implements IInteraction {
         new Promise<void>((resolve) => {
           this.completeInteraction = resolve;
 
-          this.isSpacePressed = true;
+          this.isTriggerPressed = true;
           const viewBox = getViewBox(this.document);
 
           this.startViewBoxString = viewBoxToString(viewBox);
@@ -129,7 +147,7 @@ export class SpacebarDrag extends Interaction implements IInteraction {
   };
 
   private handleKeyUp = (event: KeyboardEvent) => {
-    if (event.code !== 'Space') return;
+    if (!this.trigger.includes(event.code)) return;
     this.stopDrag();
   };
 
@@ -149,7 +167,7 @@ export class SpacebarDrag extends Interaction implements IInteraction {
     }
     this.startViewBoxString = undefined;
 
-    this.isSpacePressed = false;
+    this.isTriggerPressed = false;
 
     this.setCursor('default');
 

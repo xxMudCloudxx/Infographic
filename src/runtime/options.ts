@@ -2,19 +2,19 @@ import {
   BrushSelect,
   ClickSelect,
   DblClickEditText,
+  DragCanvas,
   DragElement,
   EditBar,
   HotkeyHistory,
   ResizeElement,
   SelectHighlight,
-  SpacebarDrag,
   ZoomWheel,
 } from '../editor';
 import { InfographicOptions } from '../options';
 
 const createDefaultPlugins = () => [new EditBar(), new ResizeElement()];
 const createDefaultInteractions = () => [
-  new SpacebarDrag(),
+  new DragCanvas(),
   new DblClickEditText(),
   new BrushSelect(),
   new ClickSelect(),

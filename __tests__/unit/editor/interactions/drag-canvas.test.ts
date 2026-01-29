@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UpdateOptionsCommand } from '../../../../src/editor/commands';
-import { SpacebarDrag } from '../../../../src/editor/interactions/spacebar-drag';
+import { DragCanvas } from '../../../../src/editor/interactions/drag-canvas';
 
 // Hoist mocks to be used in vi.mock
 const {
@@ -51,8 +51,8 @@ vi.mock('../../../../src/editor/commands', () => {
   };
 });
 
-describe('SpacebarDrag Interaction', () => {
-  let instance: SpacebarDrag;
+describe('DragCanvas Interaction', () => {
+  let instance: DragCanvas;
   let svg: SVGSVGElement;
   let interaction: any;
   let commander: any;
@@ -78,7 +78,7 @@ describe('SpacebarDrag Interaction', () => {
       updateOptions: vi.fn(),
     };
 
-    instance = new SpacebarDrag();
+    instance = new DragCanvas();
     instance.init({
       emitter: {} as any,
       editor: { getDocument: () => svg } as any,
@@ -157,7 +157,7 @@ describe('SpacebarDrag Interaction', () => {
       document.body.removeChild(div);
     });
 
-    it('does not activate for non-Space key', () => {
+    it('does not activate for non-trigger key', () => {
       svg.dispatchEvent(new MouseEvent('mouseenter'));
       const event = new KeyboardEvent('keydown', {
         code: 'Enter',
@@ -203,6 +203,25 @@ describe('SpacebarDrag Interaction', () => {
 
       expect(getViewBoxMock).toHaveBeenCalledWith(svg);
       expect(document.body.style.cursor).toBe('grab');
+    });
+
+    it('supports custom trigger', async () => {
+      instance.trigger = ['KeyA'];
+      svg.dispatchEvent(new MouseEvent('mouseenter'));
+
+      const event = new KeyboardEvent('keydown', {
+        code: 'KeyA',
+        bubbles: true,
+      });
+      document.body.dispatchEvent(event);
+      await Promise.resolve();
+
+      expect(document.body.style.cursor).toBe('grab');
+    });
+
+    it('initializes with custom trigger from constructor', () => {
+      const instance = new DragCanvas({ trigger: ['Shift'] });
+      expect(instance.trigger).toEqual(['Shift']);
     });
   });
 
@@ -366,11 +385,5 @@ describe('SpacebarDrag Interaction', () => {
       window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space' }));
       expect(document.body.style.cursor).toBe('default');
     });
-
-    // Edge case: space pressed while NOT hovering, then mouse enters?
-    // Current implementation: handleKeyDown checks `!this.isHovering`.
-    // So if I press space outside, nothing happens.
-    // Then if I enter, nothing happens because keydown fired already.
-    // Only if I press space AGAIN while inside. This works as intended and tested by "does not activate if not hovering".
   });
 });
