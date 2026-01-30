@@ -19,7 +19,7 @@ import { RESET_ICON } from './components/icons';
 
 const MARGIN_X = 25;
 const MARGIN_Y = 25;
-const BUTTON_SIZE = 60;
+const BUTTON_SIZE = 40;
 export interface ResetViewBoxOptions {
   style?: Partial<CSSStyleDeclaration>;
   className?: string;
@@ -185,7 +185,7 @@ export class ResetViewBox extends Plugin implements IPlugin {
     injectStyleOnce(
       RESET_BUTTON_STYLE_ID,
       `
-      .${RESET_BUTTON_CLASS} {
+      button.${RESET_BUTTON_CLASS} {
         visibility: hidden;
         position: absolute;
         display: flex;
@@ -193,7 +193,7 @@ export class ResetViewBox extends Plugin implements IPlugin {
         align-items: center;
         width: ${BUTTON_SIZE}px;
         height: ${BUTTON_SIZE}px;
-        border-radius: 8px;
+        border-radius: 50%;
         padding: 4px;
         background-color: #fff;
         border: 1px solid rgba(239, 240, 240, 0.9);
