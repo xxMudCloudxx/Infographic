@@ -2,6 +2,7 @@ import { COMPONENT_ROLE } from '../../constants';
 import {
   getBoundViewBox,
   getViewBox,
+  injectStyleOnce,
   parsePadding,
   setElementRole,
   viewBoxToString,
@@ -18,7 +19,7 @@ import { RESET_ICON } from './components/icons';
 
 const MARGIN_X = 25;
 const MARGIN_Y = 25;
-const BUTTON_SIZE = 40;
+const BUTTON_SIZE = 60;
 export interface ResetViewBoxOptions {
   style?: Partial<CSSStyleDeclaration>;
   className?: string;
@@ -41,6 +42,7 @@ export class ResetViewBox extends Plugin implements IPlugin {
     const { emitter } = options;
 
     // Initialize originViewBox
+    this.ensureButtonStyle();
     this.updateOriginViewBox();
 
     emitter.on('viewBox:change', this.handleViewBoxChange);
@@ -95,28 +97,16 @@ export class ResetViewBox extends Plugin implements IPlugin {
     const button = IconButton({
       icon: RESET_ICON,
       onClick: this.resetViewBox,
-    }) as HTMLButtonElement;
+    });
 
-    Object.assign(button.style, {
-      visibility: 'hidden',
-      position: 'absolute',
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: `${BUTTON_SIZE}px`,
-      height: `${BUTTON_SIZE}px`,
-      borderRadius: '8px',
-      padding: '4px',
-      backgroundColor: '#fff',
-      border: '1px solid rgba(239, 240, 240, 0.9)',
-      zIndex: '1000',
-      boxShadow:
-        'rgba(0, 0, 0, 0.08) 0px 1px 2px -2px, rgba(0, 0, 0, 0.04) 0px 2px 6px, rgba(0, 0, 0, 0.02) 0px 4px 8px 1px',
-      cursor: 'pointer',
-      ...style,
-    } satisfies Partial<CSSStyleDeclaration>);
+    button.classList.add(RESET_BUTTON_CLASS);
 
     if (className) {
       button.classList.add(className);
+    }
+
+    if (style) {
+      Object.assign(button.style, style);
     }
 
     setElementRole(button, COMPONENT_ROLE);
@@ -134,28 +124,29 @@ export class ResetViewBox extends Plugin implements IPlugin {
   };
 
   private placeButton = (button: HTMLButtonElement, svg: SVGSVGElement) => {
+    if (!svg.isConnected) return;
     const rect = svg.getBoundingClientRect();
-    const offsetParent = (button.offsetParent as HTMLElement) || document.body;
-    let parentRect = { left: 0, top: 0 };
+    const offsetParent =
+      (button.offsetParent as HTMLElement | null) ??
+      (document.documentElement as HTMLElement);
 
-    // 如果挂载点不是 body，需要计算相对于 offsetParent 的位置
     if (
-      offsetParent !== document.body &&
-      offsetParent !== document.documentElement
+      offsetParent === document.body ||
+      offsetParent === document.documentElement
     ) {
-      parentRect = offsetParent.getBoundingClientRect();
-    } else {
-      // 如果是 body，需要考虑滚动条
-      parentRect = {
-        left: -window.scrollX,
-        top: -window.scrollY,
-      };
+      const scrollX = window.scrollX || document.documentElement.scrollLeft;
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+
+      const left = scrollX + rect.right - MARGIN_X - BUTTON_SIZE;
+      const top = scrollY + rect.bottom - MARGIN_Y - BUTTON_SIZE;
+
+      button.style.left = `${left}px`;
+      button.style.top = `${top}px`;
+      return;
     }
 
-    // 计算相对于 offsetParent 的坐标
-    // left = svg.right - parent.left - margin - buttonWidth
+    const parentRect = offsetParent.getBoundingClientRect();
     const left = rect.right - parentRect.left - MARGIN_X - BUTTON_SIZE;
-    // top = svg.bottom - parent.top - margin - buttonHeight
     const top = rect.bottom - parentRect.top - MARGIN_Y - BUTTON_SIZE;
 
     button.style.left = `${left}px`;
@@ -189,4 +180,31 @@ export class ResetViewBox extends Plugin implements IPlugin {
     this.resetButton?.remove();
     this.resetButton = undefined;
   };
+
+  private ensureButtonStyle() {
+    injectStyleOnce(
+      RESET_BUTTON_STYLE_ID,
+      `
+      .${RESET_BUTTON_CLASS} {
+        visibility: hidden;
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: ${BUTTON_SIZE}px;
+        height: ${BUTTON_SIZE}px;
+        border-radius: 8px;
+        padding: 4px;
+        background-color: #fff;
+        border: 1px solid rgba(239, 240, 240, 0.9);
+        z-index: 1000;
+        box-shadow: rgba(0, 0, 0, 0.08) 0px 1px 2px -2px, rgba(0, 0, 0, 0.04) 0px 2px 6px, rgba(0, 0, 0, 0.02) 0px 4px 8px 1px;
+        cursor: pointer;
+      }
+      `,
+    );
+  }
 }
+
+const RESET_BUTTON_CLASS = 'infographic-reset-viewbox-btn';
+const RESET_BUTTON_STYLE_ID = 'infographic-reset-viewbox-btn-style';

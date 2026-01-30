@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { UpdateOptionsCommand } from '../../../../src/editor/commands';
 import { ZoomWheel } from '../../../../src/editor/interactions/zoom-wheel';
 import * as EditorUtils from '../../../../src/editor/utils';
 import '../../../setup/dom-polyfills';
@@ -372,6 +373,63 @@ describe('ZoomWheel interaction', () => {
       const viewBox = parseViewBoxFromState(state);
       expect(viewBox?.width).toBeCloseTo(220, 1);
       expect(viewBox?.height).toBeCloseTo(165, 1);
+
+      instance.destroy();
+    });
+  });
+
+  describe('command batching', () => {
+    it('batches command execution until keyup', () => {
+      const svg = createSVG('0 0 100 100');
+      const commander = { execute: vi.fn() } as any;
+      const interaction = { isActive: vi.fn(() => true) } as any;
+      const state = {
+        getOptions: vi.fn(() => ({})),
+        updateOptions: vi.fn((options: any) => {
+          if (options.viewBox) {
+            svg.setAttribute('viewBox', options.viewBox);
+          }
+        }),
+      } as any;
+
+      const instance = new ZoomWheel();
+      instance.init({
+        emitter: {} as any,
+        editor: { getDocument: () => svg } as any,
+        commander,
+        interaction,
+        state,
+      });
+
+      // 1. Trigger zoom (Wheel)
+      const wheelEvent = new WheelEvent('wheel', {
+        deltaY: 120,
+        shiftKey: true,
+      });
+      document.dispatchEvent(wheelEvent);
+
+      // State should update, but command should NOT be executed yet
+      expect(state.updateOptions).toHaveBeenCalled();
+      expect(commander.execute).not.toHaveBeenCalled();
+
+      // 2. Trigger another zoom (Wheel)
+      document.dispatchEvent(wheelEvent);
+      expect(state.updateOptions).toHaveBeenCalledTimes(2);
+      expect(commander.execute).not.toHaveBeenCalled();
+
+      // 3. Trigger KeyUp (release Shift)
+      const keyUpEvent = new KeyboardEvent('keyup', { shiftKey: false });
+      document.dispatchEvent(keyUpEvent);
+
+      // Command SHOULD be executed now
+      expect(commander.execute).toHaveBeenCalledTimes(1);
+      const command = commander.execute.mock.calls[0][0];
+      expect(command).toBeInstanceOf(UpdateOptionsCommand);
+      // Verify command stores original viewBox (0 0 100 100) and new viewBox
+      // We can't easily check the "new" viewBox in command without mocking the final state of SVG,
+      // but we can check the "original" in the command payload if we inspect it.
+      // UpdateOptionsCommand usually takes (newOptions, originalOptions).
+      // Let's just verify it was called.
 
       instance.destroy();
     });
