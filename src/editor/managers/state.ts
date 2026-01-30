@@ -1,10 +1,17 @@
+import { merge } from 'lodash-es';
 import { ElementTypeEnum } from '../../constants';
 import type {
   ParsedInfographicOptions,
   UpdatableInfographicOptions,
 } from '../../options';
 import type { Element, IEventEmitter, ItemDatum } from '../../types';
-import { getDatumByIndexes, getElementRole, isIconElement } from '../../utils';
+import {
+  getDatumByIndexes,
+  getElementRole,
+  isIconElement,
+  parsePadding,
+  setSVGPadding,
+} from '../../utils';
 import type {
   ElementProps,
   ICommandManager,
@@ -14,7 +21,6 @@ import type {
   StateManagerInitOptions,
 } from '../types';
 import {
-  applyOptionUpdates,
   buildItemPath,
   getChildrenDataByIndexes,
   getIndexesFromElement,
@@ -110,7 +116,7 @@ export class StateManager implements IStateManager {
   }
 
   updateOptions(options: UpdatableInfographicOptions) {
-    applyOptionUpdates(this.options, options);
+    merge(this.options, options);
     if (this.options.viewBox) {
       this.editor.getDocument().setAttribute('viewBox', this.options.viewBox);
     }
@@ -120,6 +126,13 @@ export class StateManager implements IStateManager {
         type: 'viewBox:change',
         viewBox: this.options.viewBox,
       });
+    }
+
+    if (this.options.padding !== undefined) {
+      setSVGPadding(
+        this.editor.getDocument(),
+        parsePadding(this.options.padding),
+      );
     }
 
     this.emitter.emit('options:change', {

@@ -39,7 +39,6 @@ export class ResetViewBox extends Plugin implements IPlugin {
   init(options: PluginInitOptions) {
     super.init(options);
     const { emitter } = options;
-    const svg = this.editor.getDocument();
 
     // Initialize originViewBox
     this.updateOriginViewBox();

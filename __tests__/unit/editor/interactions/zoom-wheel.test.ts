@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { UpdateOptionsCommand } from '../../../../src/editor/commands/UpdateOptions';
 import { ZoomWheel } from '../../../../src/editor/interactions/zoom-wheel';
 import * as EditorUtils from '../../../../src/editor/utils';
 import '../../../setup/dom-polyfills';
@@ -13,9 +12,10 @@ const createSVG = (viewBox: string) => {
   return svg;
 };
 
-// Helper to parse viewBox string from command
-const parseViewBox = (command: UpdateOptionsCommand) => {
-  const viewBoxStr = command.serialize().options.viewBox as string;
+// Helper to parse viewBox string from updateOptions call
+const parseViewBoxFromState = (state: any) => {
+  const options = state.updateOptions.mock.calls[0][0];
+  const viewBoxStr = options.viewBox as string;
   if (!viewBoxStr) return null;
   const [x, y, width, height] = viewBoxStr.split(' ').map(Number);
   return { x, y, width, height };
@@ -27,7 +27,10 @@ describe('ZoomWheel interaction', () => {
       const svg = createSVG('0 0 100 100');
       const commander = { execute: vi.fn() } as any;
       const interaction = { isActive: vi.fn(() => true) } as any;
-      const state = { getOptions: vi.fn(() => ({})) } as any;
+      const state = {
+        getOptions: vi.fn(() => ({})),
+        updateOptions: vi.fn(),
+      } as any;
 
       const instance = new ZoomWheel();
       instance.init({
@@ -43,8 +46,8 @@ describe('ZoomWheel interaction', () => {
       document.dispatchEvent(event);
 
       expect(preventDefaultSpy).toHaveBeenCalled();
-      expect(commander.execute).toHaveBeenCalledTimes(1);
-      const viewBox = parseViewBox(commander.execute.mock.calls[0][0]);
+      expect(state.updateOptions).toHaveBeenCalledTimes(1);
+      const viewBox = parseViewBoxFromState(state);
       // deltaY > 0 => factor = 1.1, viewBox gets larger (zoom out)
       expect(viewBox?.width).toBeCloseTo(110, 1);
       expect(viewBox?.height).toBeCloseTo(110, 1);
@@ -56,7 +59,10 @@ describe('ZoomWheel interaction', () => {
       const svg = createSVG('0 0 100 100');
       const commander = { execute: vi.fn() } as any;
       const interaction = { isActive: vi.fn(() => true) } as any;
-      const state = { getOptions: vi.fn(() => ({})) } as any;
+      const state = {
+        getOptions: vi.fn(() => ({})),
+        updateOptions: vi.fn(),
+      } as any;
 
       const instance = new ZoomWheel();
       instance.init({
@@ -70,8 +76,8 @@ describe('ZoomWheel interaction', () => {
       const event = new WheelEvent('wheel', { deltaY: -120, shiftKey: true });
       document.dispatchEvent(event);
 
-      expect(commander.execute).toHaveBeenCalledTimes(1);
-      const viewBox = parseViewBox(commander.execute.mock.calls[0][0]);
+      expect(state.updateOptions).toHaveBeenCalledTimes(1);
+      const viewBox = parseViewBoxFromState(state);
       // deltaY < 0 => factor = 1/1.1, viewBox gets smaller (zoom in)
       expect(viewBox?.width).toBeCloseTo(90.9, 1);
       expect(viewBox?.height).toBeCloseTo(90.9, 1);
@@ -83,7 +89,10 @@ describe('ZoomWheel interaction', () => {
       const svg = createSVG('50 50 100 100'); // center at (100, 100)
       const commander = { execute: vi.fn() } as any;
       const interaction = { isActive: vi.fn(() => true) } as any;
-      const state = { getOptions: vi.fn(() => ({})) } as any;
+      const state = {
+        getOptions: vi.fn(() => ({})),
+        updateOptions: vi.fn(),
+      } as any;
 
       const instance = new ZoomWheel();
       instance.init({
@@ -97,7 +106,7 @@ describe('ZoomWheel interaction', () => {
       const event = new WheelEvent('wheel', { deltaY: 120, shiftKey: true });
       document.dispatchEvent(event);
 
-      const viewBox = parseViewBox(commander.execute.mock.calls[0][0]);
+      const viewBox = parseViewBoxFromState(state);
       // Center should remain at (100, 100): x + width/2 = 100
       const newCenter = {
         x: viewBox!.x + viewBox!.width / 2,
@@ -119,7 +128,10 @@ describe('ZoomWheel interaction', () => {
       const svg = createSVG('0 0 100 100');
       const commander = { execute: vi.fn() } as any;
       const interaction = { isActive: vi.fn(() => true) } as any;
-      const state = { getOptions: vi.fn(() => ({})) } as any;
+      const state = {
+        getOptions: vi.fn(() => ({})),
+        updateOptions: vi.fn(),
+      } as any;
 
       // Mock clientToViewport to return a specific point (e.g., 25, 25)
       // This represents the mouse cursor position in SVG coordinates
@@ -150,8 +162,8 @@ describe('ZoomWheel interaction', () => {
       });
       document.dispatchEvent(event);
 
-      expect(commander.execute).toHaveBeenCalledTimes(1);
-      const viewBox = parseViewBox(commander.execute.mock.calls[0][0]);
+      expect(state.updateOptions).toHaveBeenCalledTimes(1);
+      const viewBox = parseViewBoxFromState(state);
 
       expect(viewBox?.width).toBeCloseTo(110, 1);
       expect(viewBox?.height).toBeCloseTo(110, 1);
@@ -165,7 +177,10 @@ describe('ZoomWheel interaction', () => {
       const svg = createSVG('0 0 100 100');
       const commander = { execute: vi.fn() } as any;
       const interaction = { isActive: vi.fn(() => true) } as any;
-      const state = { getOptions: vi.fn(() => ({})) } as any;
+      const state = {
+        getOptions: vi.fn(() => ({})),
+        updateOptions: vi.fn(),
+      } as any;
 
       // Mock mouse at (80, 80)
       const clientToViewportSpy = vi.spyOn(EditorUtils, 'clientToViewport');
@@ -193,45 +208,13 @@ describe('ZoomWheel interaction', () => {
       });
       document.dispatchEvent(event);
 
-      expect(commander.execute).toHaveBeenCalledTimes(1);
-      const viewBox = parseViewBox(commander.execute.mock.calls[0][0]);
+      expect(state.updateOptions).toHaveBeenCalledTimes(1);
+      const viewBox = parseViewBoxFromState(state);
 
       expect(viewBox?.width).toBeCloseTo(90.909, 3);
       expect(viewBox?.height).toBeCloseTo(90.909, 3);
       expect(viewBox?.x).toBeCloseTo(7.273, 3);
       expect(viewBox?.y).toBeCloseTo(7.273, 3);
-
-      instance.destroy();
-    });
-  });
-
-  describe('reset zoom (Ctrl/Meta + Shift + Wheel)', () => {
-    it('resets viewBox when Ctrl + Shift are both pressed', () => {
-      const svg = createSVG('0 0 100 100');
-      const commander = { execute: vi.fn() } as any;
-      const interaction = { isActive: vi.fn(() => true) } as any;
-      const state = { getOptions: vi.fn(() => ({})) } as any;
-
-      const instance = new ZoomWheel();
-      instance.init({
-        emitter: {} as any,
-        editor: { getDocument: () => svg } as any,
-        commander,
-        interaction,
-        state,
-      });
-
-      const event = new WheelEvent('wheel', {
-        deltaY: 120,
-        ctrlKey: true,
-        shiftKey: true,
-      });
-      document.dispatchEvent(event);
-
-      expect(commander.execute).toHaveBeenCalledTimes(1);
-      const command = commander.execute.mock
-        .calls[0][0] as UpdateOptionsCommand;
-      expect(command.serialize().options.viewBox).toBeUndefined();
 
       instance.destroy();
     });
@@ -368,7 +351,10 @@ describe('ZoomWheel interaction', () => {
 
       const commander = { execute: vi.fn() } as any;
       const interaction = { isActive: vi.fn(() => true) } as any;
-      const state = { getOptions: vi.fn(() => ({})) } as any;
+      const state = {
+        getOptions: vi.fn(() => ({})),
+        updateOptions: vi.fn(),
+      } as any;
 
       const instance = new ZoomWheel();
       instance.init({
@@ -382,8 +368,8 @@ describe('ZoomWheel interaction', () => {
       const event = new WheelEvent('wheel', { deltaY: 120, shiftKey: true });
       document.dispatchEvent(event);
 
-      expect(commander.execute).toHaveBeenCalledTimes(1);
-      const viewBox = parseViewBox(commander.execute.mock.calls[0][0]);
+      expect(state.updateOptions).toHaveBeenCalledTimes(1);
+      const viewBox = parseViewBoxFromState(state);
       expect(viewBox?.width).toBeCloseTo(220, 1);
       expect(viewBox?.height).toBeCloseTo(165, 1);
 

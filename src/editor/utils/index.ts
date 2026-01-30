@@ -5,4 +5,3 @@ export * from './element';
 export * from './event';
 export * from './extension';
 export * from './hotkey';
-export * from './object';
