@@ -1,5 +1,6 @@
 import type { ParsedInfographicOptions } from '../options';
 import type { IEventEmitter } from '../types';
+import { parsePadding, setSVGPadding } from '../utils';
 import {
   CommandManager,
   InteractionManager,
@@ -56,6 +57,20 @@ export class Editor implements IEditor {
       commander,
       state,
       interactions: options.interactions,
+    });
+
+    emitter.on('viewBox:change', (payload: { viewBox?: string }) => {
+      if (payload.viewBox) {
+        document.setAttribute('viewBox', payload.viewBox);
+      } else {
+        document.removeAttribute('viewBox');
+      }
+    });
+
+    emitter.on('padding:change', (payload: { padding?: number | number[] }) => {
+      if (payload.padding !== undefined) {
+        setSVGPadding(document, parsePadding(payload.padding));
+      }
     });
 
     this.commander = commander;

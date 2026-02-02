@@ -1,12 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { StateManager } from '../../../../src/editor/managers/state';
 import type { Data, Element } from '../../../../src/types';
-import { setSVGPadding } from '../../../../src/utils';
-
-vi.mock('../../../../src/utils', async () => {
-  const actual = await vi.importActual<any>('../../../../src/utils');
-  return { ...actual, setSVGPadding: vi.fn() };
-});
 
 const createSVGElement = (role: string, indexes?: number[]): Element => {
   const element = document.createElementNS(
@@ -175,10 +169,8 @@ describe('StateManager', () => {
     });
   });
 
-  it('updates options and applies padding', () => {
-    const mockedSetSVGPadding = vi.mocked(setSVGPadding);
-    mockedSetSVGPadding.mockClear();
-    const { state, emitter, data, svg } = createState(undefined, {
+  it('updates options and emits padding:change event', () => {
+    const { state, emitter, data } = createState(undefined, {
       padding: 0,
     });
 
@@ -190,7 +182,10 @@ describe('StateManager', () => {
       padding: 10,
       theme: 'dark',
     });
-    expect(mockedSetSVGPadding).toHaveBeenCalledWith(svg, [10, 10, 10, 10]);
+    expect(emitter.emit).toHaveBeenCalledWith('padding:change', {
+      type: 'padding:change',
+      padding: 10,
+    });
     expect(emitter.emit).toHaveBeenCalledWith('options:change', {
       type: 'options:change',
       changes: [
@@ -203,10 +198,56 @@ describe('StateManager', () => {
     });
   });
 
-  it('updates options and handles viewBox attribute', () => {
-    const { state, svg } = createState();
+  it('emits viewBox:change event when updating viewBox option', () => {
+    const { state, emitter } = createState();
 
+    // 1. Set viewBox
     state.updateOptions({ viewBox: '0 0 100 100' } as any);
-    expect(svg.getAttribute('viewBox')).toBe('0 0 100 100');
+    expect(emitter.emit).toHaveBeenCalledWith('viewBox:change', {
+      type: 'viewBox:change',
+      viewBox: '0 0 100 100',
+    });
+    expect(state.getOptions().viewBox).toBe('0 0 100 100');
+
+    emitter.emit.mockClear();
+
+    // 2. Unset viewBox (should emit with undefined viewBox)
+    state.updateOptions({ viewBox: undefined } as any);
+    expect(emitter.emit).toHaveBeenCalledWith('viewBox:change', {
+      type: 'viewBox:change',
+      viewBox: undefined,
+    });
+    expect(state.getOptions().viewBox).toBeUndefined();
+  });
+
+  it('recursively removes properties set to undefined in updateOptions', () => {
+    const { state } = createState(undefined, {
+      padding: 0,
+      design: {
+        background: 'red',
+        font: 'Arial',
+        shadow: {
+          x: 1,
+          y: 2,
+        },
+      },
+    });
+
+    state.updateOptions({
+      design: {
+        background: undefined,
+        shadow: {
+          x: undefined,
+        },
+      },
+    } as any);
+
+    const opts = state.getOptions() as any;
+    expect(opts.design.background).toBeUndefined();
+    expect('background' in opts.design).toBe(false);
+    expect(opts.design.font).toBe('Arial');
+    expect(opts.design.shadow.x).toBeUndefined();
+    expect('x' in opts.design.shadow).toBe(false);
+    expect(opts.design.shadow.y).toBe(2);
   });
 });
