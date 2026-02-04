@@ -44,6 +44,12 @@ export class Editor implements IEditor {
       get(state.getOptions(), path),
     );
 
+    this.commander = commander;
+    this.state = state;
+    this.plugin = plugin;
+    this.interaction = interaction;
+    this.syncRegistry = syncRegistry;
+
     commander.init({ state, emitter });
     state.init({
       emitter,
@@ -67,12 +73,6 @@ export class Editor implements IEditor {
       state,
       interactions: options.interactions,
     });
-
-    this.commander = commander;
-    this.state = state;
-    this.plugin = plugin;
-    this.interaction = interaction;
-    this.syncRegistry = syncRegistry;
 
     this.registerSync(
       'viewBox',

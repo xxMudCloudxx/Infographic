@@ -8,11 +8,7 @@ import {
   viewBoxToString,
 } from '../../utils';
 import { UpdateOptionsCommand } from '../commands';
-import type {
-  IPlugin,
-  PluginInitOptions,
-  viewBoxChangePayload,
-} from '../types';
+import type { IPlugin, PluginInitOptions } from '../types';
 import { Plugin } from './base';
 import { IconButton } from './components';
 import { RESET_ICON } from './components/icons';
@@ -32,6 +28,7 @@ export class ResetViewBox extends Plugin implements IPlugin {
   private originViewBox!: string;
   private resetButton?: HTMLButtonElement;
   private viewBoxChanged = false;
+  private unregisterSync?: () => void;
 
   constructor(private options?: ResetViewBoxOptions) {
     super();
@@ -39,19 +36,20 @@ export class ResetViewBox extends Plugin implements IPlugin {
 
   init(options: PluginInitOptions) {
     super.init(options);
-    const { emitter } = options;
 
     // Initialize originViewBox
     this.ensureButtonStyle();
     this.updateOriginViewBox();
 
-    emitter.on('viewBox:change', this.handleViewBoxChange);
+    this.unregisterSync = this.editor.registerSync(
+      'viewBox',
+      this.handleViewBoxChange,
+    );
     window.addEventListener('resize', this.handleResize);
   }
 
   destroy(): void {
-    const { emitter } = this;
-    emitter.off('viewBox:change', this.handleViewBoxChange);
+    this.unregisterSync?.();
     window.removeEventListener('resize', this.handleResize);
     this.removeButton();
   }
@@ -74,7 +72,7 @@ export class ResetViewBox extends Plugin implements IPlugin {
     this.originViewBox = getBoundViewBox(svg, parsePadding(padding));
   }
 
-  private handleViewBoxChange = ({ viewBox }: viewBoxChangePayload) => {
+  private handleViewBoxChange = (viewBox?: string) => {
     const svg = this.editor.getDocument();
 
     this.viewBoxChanged = viewBox !== this.originViewBox;
