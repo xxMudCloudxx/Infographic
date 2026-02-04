@@ -1,6 +1,12 @@
 export * from './designs';
 export { getItemProps, getThemeColors } from './designs/utils';
 export {
+  BatchCommand,
+  UpdateElementCommand,
+  UpdateOptionsCommand,
+  UpdateTextCommand,
+} from './editor/commands';
+export {
   BrushSelect,
   ClickSelect,
   DblClickEditText,
@@ -52,7 +58,24 @@ export { getTheme, getThemes, registerTheme } from './themes';
 export { parseSVG, setFontExtendFactor } from './utils';
 export { VERSION } from './version';
 
-export type { EditBarOptions } from './editor';
+export type {
+  EditBarOptions,
+  ICommand,
+  ICommandManager,
+  IEditor,
+  IInteraction,
+  IInteractionManager,
+  IPlugin,
+  IPluginManager,
+  IStateManager,
+  ISyncRegistry,
+  InteractionInitOptions,
+  KeyCode,
+  PluginInitOptions,
+  SelectMode,
+  Selection,
+  SyncHandler,
+} from './editor';
 export type {
   ExportOptions,
   PNGExportOptions,
