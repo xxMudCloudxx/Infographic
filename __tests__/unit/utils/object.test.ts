@@ -92,7 +92,7 @@ describe('mergeOptions', () => {
     const target = { a: 1, b: 2 };
     const source = { b: 3 };
     const collector = vi.fn();
-    applyOptionUpdates(target, source, '', collector);
+    applyOptionUpdates(target, source, '', { collector });
     expect(collector).toHaveBeenCalledWith('b', 3, 2);
     expect(collector).toHaveBeenCalledTimes(1);
   });
@@ -101,7 +101,7 @@ describe('mergeOptions', () => {
     const target = { a: 1, b: 2 };
     const source = { b: undefined };
     const collector = vi.fn();
-    applyOptionUpdates(target, source, '', collector);
+    applyOptionUpdates(target, source, '', { collector });
     expect(collector).toHaveBeenCalledWith('b', undefined, 2);
   });
 
@@ -109,7 +109,7 @@ describe('mergeOptions', () => {
     const target = { a: 1 };
     const source = { a: 1 };
     const collector = vi.fn();
-    applyOptionUpdates(target, source, '', collector);
+    applyOptionUpdates(target, source, '', { collector });
     expect(collector).not.toHaveBeenCalled();
   });
 
@@ -117,7 +117,7 @@ describe('mergeOptions', () => {
     const target = { a: { x: 1 } };
     const source = { a: { x: 2 } };
     const collector = vi.fn();
-    applyOptionUpdates(target, source, '', collector);
+    applyOptionUpdates(target, source, '', { collector });
     expect(collector).toHaveBeenCalledWith('a.x', 2, 1);
   });
 
@@ -125,7 +125,7 @@ describe('mergeOptions', () => {
     const target = { x: 1 };
     const source = { x: 2 };
     const collector = vi.fn();
-    applyOptionUpdates(target, source, 'prefix', collector);
+    applyOptionUpdates(target, source, 'prefix', { collector });
     expect(collector).toHaveBeenCalledWith('prefix.x', 2, 1);
   });
 
@@ -133,9 +133,50 @@ describe('mergeOptions', () => {
     const target = { a: { x: 1, y: 2 } };
     const source = { a: { x: 10, y: undefined } };
     const collector = vi.fn();
-    applyOptionUpdates(target, source, '', collector);
+    applyOptionUpdates(target, source, '', { collector });
     expect(collector).toHaveBeenCalledWith('a.x', 10, 1);
     expect(collector).toHaveBeenCalledWith('a.y', undefined, 2);
     expect(collector).toHaveBeenCalledTimes(2);
+  });
+
+  // ========== BubbleUp Tests ==========
+
+  it('bubbleUp triggers parent path notifications', () => {
+    const target = { design: { background: 'white', font: 'Arial' } };
+    const source = { design: { background: 'red', font: 'Helvetica' } };
+    const collector = vi.fn();
+    applyOptionUpdates(target, source, '', { bubbleUp: true, collector });
+    // 叶子节点通知
+    expect(collector).toHaveBeenCalledWith('design.background', 'red', 'white');
+    expect(collector).toHaveBeenCalledWith('design.font', 'Helvetica', 'Arial');
+    // 父路径通知（冒泡）
+    expect(collector).toHaveBeenCalledWith(
+      'design',
+      expect.objectContaining({ background: 'red', font: 'Helvetica' }),
+      undefined,
+    );
+    expect(collector).toHaveBeenCalledWith(
+      '',
+      expect.objectContaining({ design: expect.any(Object) }),
+      undefined,
+    );
+  });
+
+  it('bubbleUp does not trigger when no changes detected', () => {
+    const target = { a: 1 };
+    const source = { a: 1 };
+    const collector = vi.fn();
+    applyOptionUpdates(target, source, '', { bubbleUp: true, collector });
+    expect(collector).not.toHaveBeenCalled();
+  });
+
+  it('bubbleUp triggers parent notifications in correct order (deepest first)', () => {
+    const target = { a: { b: { c: 1 } } };
+    const source = { a: { b: { c: 2 } } };
+    const calls: string[] = [];
+    const collector = (path: string) => calls.push(path);
+    applyOptionUpdates(target, source, '', { bubbleUp: true, collector });
+    // 叶子节点先触发，然后是父路径（按深度降序）
+    expect(calls).toEqual(['a.b.c', 'a.b', 'a', '']);
   });
 });

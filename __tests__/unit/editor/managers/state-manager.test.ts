@@ -250,4 +250,47 @@ describe('StateManager', () => {
     expect('x' in opts.design.shadow).toBe(false);
     expect(opts.design.shadow.y).toBe(2);
   });
+  it('supports bubbleUp option in updateOptions', () => {
+    const { state, syncRegistry } = createState(undefined, {
+      design: { background: 'white' },
+    });
+
+    // 1. Default (bubbleUp: false) - should NOT trigger parent path
+    state.updateOptions({
+      design: { background: 'black' },
+    } as any);
+
+    expect(syncRegistry.trigger).toHaveBeenCalledWith(
+      'design.background',
+      'black',
+      'white',
+    );
+    expect(syncRegistry.trigger).not.toHaveBeenCalledWith(
+      'design',
+      expect.anything(),
+      expect.anything(),
+    );
+
+    syncRegistry.trigger.mockClear();
+
+    // 2. Explicit bubbleUp: true - SHOULD trigger parent path
+    state.updateOptions(
+      {
+        design: { background: 'red' },
+      } as any,
+      { bubbleUp: true },
+    );
+
+    expect(syncRegistry.trigger).toHaveBeenCalledWith(
+      'design.background',
+      'red',
+      'black',
+    );
+    // Verify bubbling behavior (design object update)
+    expect(syncRegistry.trigger).toHaveBeenCalledWith(
+      'design',
+      expect.objectContaining({ background: 'red' }),
+      undefined, // oldVal is undefined for bubbled events as per implementation
+    );
+  });
 });

@@ -1,13 +1,15 @@
+import { get } from 'lodash-es';
 import { ISyncRegistry, SyncHandler } from '../types';
 
-type ValueProvider = (path: string) => any;
+type OptionsGetter = () => any;
 
 export class SyncRegistry implements ISyncRegistry {
   private handlers = new Map<string, Set<SyncHandler>>();
-  // 递归锁
+  // lock to prevent recursive updates
   private isDispatching = false;
+  private isDestroyed = false;
 
-  constructor(private valueProvider: ValueProvider) {}
+  constructor(private getOptions: OptionsGetter) {}
 
   register(
     path: string,
@@ -20,7 +22,7 @@ export class SyncRegistry implements ISyncRegistry {
     this.handlers.get(path)!.add(handler);
 
     if (options?.immediate) {
-      const currentVal = this.valueProvider(path);
+      const currentVal = get(this.getOptions(), path);
       handler(currentVal, undefined);
     }
 
@@ -35,10 +37,12 @@ export class SyncRegistry implements ISyncRegistry {
     };
   }
   trigger(path: string, newVal: any, oldVal: any): void {
-    if (this.isDispatching) {
-      console.warn(
-        `[SyncRegistry] Recursive update detected on ${path}. Skipped to prevent loop.`,
-      );
+    if (this.isDestroyed || this.isDispatching) {
+      if (this.isDispatching) {
+        console.warn(
+          `[SyncRegistry] Recursive update detected on ${path}. Skipped to prevent loop.`,
+        );
+      }
       return;
     }
 
@@ -55,6 +59,7 @@ export class SyncRegistry implements ISyncRegistry {
   }
 
   destroy() {
+    this.isDestroyed = true;
     this.handlers.clear();
   }
 }

@@ -110,9 +110,17 @@ export class StateManager implements IStateManager {
     this.updateBuiltInElement(element, props);
   }
 
-  updateOptions(options: UpdatableInfographicOptions) {
-    applyOptionUpdates(this.options, options, '', (path, newVal, oldVal) => {
-      this.editor.syncRegistry.trigger(path, newVal, oldVal);
+  updateOptions(
+    options: UpdatableInfographicOptions,
+    execOptions?: { bubbleUp?: boolean },
+  ) {
+    const { bubbleUp = false } = execOptions || {};
+
+    applyOptionUpdates(this.options, options, '', {
+      bubbleUp,
+      collector: (path, newVal, oldVal) => {
+        this.editor.syncRegistry.trigger(path, newVal, oldVal);
+      },
     });
 
     this.emitter.emit('options:change', {

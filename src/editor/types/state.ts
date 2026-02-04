@@ -27,7 +27,16 @@ export interface IStateManager {
   removeItemDatum(indexes: number[], count?: number): void;
   updateData(key: string, value: any): void;
   updateElement(element: Element, props: Partial<ElementProps>): void;
-  updateOptions(options: UpdatableInfographicOptions): void;
+  updateOptions(
+    options: UpdatableInfographicOptions,
+    // Configuration for this update execution
+    execOptions?: {
+      // Whether to bubble up notifications to parent paths.
+      // Enabling this might duplicate objects and impact performance.
+      // Default is false.
+      bubbleUp?: boolean;
+    },
+  ): void;
   getOptions(): ParsedInfographicOptions;
   destroy(): void;
 }

@@ -3,7 +3,7 @@ import { SyncRegistry } from '../../../../src/editor/managers';
 
 describe('SyncRegistry', () => {
   const createValueProvider = (data: Record<string, any> = {}) => {
-    return (path: string) => data[path];
+    return () => data;
   };
 
   describe('register', () => {
@@ -18,7 +18,7 @@ describe('SyncRegistry', () => {
 
     it('should call handler immediately when immediate option is true', () => {
       const registry = new SyncRegistry(
-        createValueProvider({ 'test.path': 'currentValue' }),
+        createValueProvider({ test: { path: 'currentValue' } }),
       );
       const handler = vi.fn();
 
@@ -30,7 +30,7 @@ describe('SyncRegistry', () => {
 
     it('should not call handler immediately when immediate option is false or omitted', () => {
       const registry = new SyncRegistry(
-        createValueProvider({ 'test.path': 'currentValue' }),
+        createValueProvider({ test: { path: 'currentValue' } }),
       );
       const handler = vi.fn();
 

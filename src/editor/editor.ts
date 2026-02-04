@@ -1,4 +1,3 @@
-import { get } from 'lodash-es';
 import type { ParsedInfographicOptions } from '../options';
 import type { IEventEmitter } from '../types';
 import { parsePadding, setSVGPadding } from '../utils';
@@ -40,9 +39,7 @@ export class Editor implements IEditor {
     const plugin = new PluginManager();
     const interaction = new InteractionManager();
 
-    const syncRegistry = new SyncRegistry((path) =>
-      get(state.getOptions(), path),
-    );
+    const syncRegistry = new SyncRegistry(() => state.getOptions());
 
     this.commander = commander;
     this.state = state;
@@ -77,9 +74,11 @@ export class Editor implements IEditor {
     this.registerSync(
       'viewBox',
       (val) => {
-        val
-          ? document.setAttribute('viewBox', val)
-          : document.removeAttribute('viewBox');
+        if (val) {
+          document.setAttribute('viewBox', val);
+        } else {
+          document.removeAttribute('viewBox');
+        }
       },
       { immediate: true },
     );

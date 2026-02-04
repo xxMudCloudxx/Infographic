@@ -1,3 +1,8 @@
+/**
+ * 同步回调
+ * @param newValue 变更后的新值
+ * @param oldValue 变更前的旧值。注意：当作为父路径冒泡通知触发时（即监听的是非叶子节点），此值为 undefined。
+ */
 export type SyncHandler = (newValue: any, oldValue: any) => void;
 
 export interface ISyncRegistry {
