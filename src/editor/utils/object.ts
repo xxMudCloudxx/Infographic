@@ -4,7 +4,7 @@ export function applyOptionUpdates(
   target: any,
   source: any,
   basePath: string = '',
-  collecotor?: (path: string, newVal: any, oldVal: any) => void,
+  collector?: (path: string, newVal: any, oldVal: any) => void,
 ) {
   Object.keys(source).forEach((key) => {
     const fullPath = basePath ? `${basePath}.${key}` : key;
@@ -13,16 +13,16 @@ export function applyOptionUpdates(
 
     if (updateValue === undefined) {
       delete target[key];
-      collecotor?.(fullPath, undefined, oldValue);
+      collector?.(fullPath, undefined, oldValue);
     } else if (isPlainObject(updateValue)) {
       if (!isPlainObject(target[key])) {
         target[key] = {};
       }
-      applyOptionUpdates(target[key], updateValue, fullPath, collecotor);
+      applyOptionUpdates(target[key], updateValue, fullPath, collector);
     } else {
       target[key] = updateValue;
       if (updateValue !== oldValue) {
-        collecotor?.(fullPath, updateValue, oldValue);
+        collector?.(fullPath, updateValue, oldValue);
       }
     }
   });

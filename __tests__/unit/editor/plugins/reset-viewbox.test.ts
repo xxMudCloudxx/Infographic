@@ -53,15 +53,21 @@ describe('ResetViewBox Plugin', () => {
     const commander = { execute: vi.fn() };
     const getOptions = vi.fn(() => ({ padding: [0, 0, 0, 0] }));
 
+    const registerSync = vi.fn(() => vi.fn()); // Returns unregister function
+
     plugin.init({
       emitter: emitter as any,
-      editor: { getDocument: () => svg, state: { getOptions } } as any,
+      editor: {
+        getDocument: () => svg,
+        state: { getOptions },
+        registerSync,
+      } as any,
       commander: commander as any,
       plugin: {} as any,
       state: { getOptions } as any,
     });
 
-    return { plugin, svg, emitter, commander, getOptions };
+    return { plugin, svg, emitter, commander, getOptions, registerSync };
   };
 
   it('initializes and calculates originViewBox', () => {
@@ -74,13 +80,10 @@ describe('ResetViewBox Plugin', () => {
     });
     (getBoundViewBox as any).mockReturnValue('0 0 100 100');
 
-    const { plugin, svg, emitter } = setupPlugin();
+    const { plugin, svg, registerSync } = setupPlugin();
 
     expect(getBoundViewBox).toHaveBeenCalledWith(svg, expect.any(Array));
-    expect(emitter.on).toHaveBeenCalledWith(
-      'viewBox:change',
-      expect.any(Function),
-    );
+    expect(registerSync).toHaveBeenCalledWith('viewBox', expect.any(Function));
 
     plugin.destroy();
   });
@@ -97,7 +100,7 @@ describe('ResetViewBox Plugin', () => {
     const { plugin } = setupPlugin();
 
     // Trigger change
-    (plugin as any).handleViewBoxChange({ viewBox: '10 10 50 50' });
+    (plugin as any).handleViewBoxChange('10 10 50 50');
 
     // Button should be created and shown
     const button = (plugin as any).resetButton as HTMLButtonElement;
@@ -113,12 +116,12 @@ describe('ResetViewBox Plugin', () => {
     const { plugin } = setupPlugin();
 
     // First show it
-    (plugin as any).handleViewBoxChange({ viewBox: '10 10 50 50' });
+    (plugin as any).handleViewBoxChange('10 10 50 50');
     const button = (plugin as any).resetButton;
     expect(button.style.visibility).toBe('visible');
 
     // Then hide it
-    (plugin as any).handleViewBoxChange({ viewBox: '0 0 100 100' });
+    (plugin as any).handleViewBoxChange('0 0 100 100');
     expect(button.style.display).toBe('none');
 
     plugin.destroy();
@@ -129,7 +132,7 @@ describe('ResetViewBox Plugin', () => {
     const { plugin, commander } = setupPlugin();
 
     // Show button to create it
-    (plugin as any).handleViewBoxChange({ viewBox: '10 10 50 50' });
+    (plugin as any).handleViewBoxChange('10 10 50 50');
     const button = (plugin as any).resetButton;
 
     // Click
@@ -181,7 +184,7 @@ describe('ResetViewBox Plugin', () => {
     // However, since we can't easily mock the button's offsetParent readonly property without defineProperty after creation, we'll verify the result.
 
     // Show button
-    (plugin as any).handleViewBoxChange({ viewBox: '10 10 50 50' });
+    (plugin as any).handleViewBoxChange('10 10 50 50');
     const button = (plugin as any).resetButton;
 
     // We can't easily test the exact pixels without a full layout engine,
@@ -208,9 +211,15 @@ describe('ResetViewBox Plugin', () => {
       height: 100,
     });
 
+    const registerSync = vi.fn(() => vi.fn());
+
     plugin.init({
       emitter: emitter as any,
-      editor: { getDocument: () => nodeSvg, state: { getOptions } } as any,
+      editor: {
+        getDocument: () => nodeSvg,
+        state: { getOptions },
+        registerSync,
+      } as any,
       commander: {} as any,
       plugin: {} as any,
       state: { getOptions } as any,
