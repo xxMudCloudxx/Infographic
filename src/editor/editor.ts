@@ -1,6 +1,5 @@
 import type { ParsedInfographicOptions } from '../options';
 import type { IEventEmitter } from '../types';
-import { parsePadding, setSVGPadding } from '../utils';
 import {
   CommandManager,
   InteractionManager,
@@ -8,6 +7,7 @@ import {
   StateManager,
 } from './managers';
 import { SyncRegistry } from './managers/sync-registry';
+import { CoreSyncPlugin } from './plugins';
 import type {
   ICommandManager,
   IEditor,
@@ -54,6 +54,10 @@ export class Editor implements IEditor {
       commander,
       options,
     });
+    // Load core plugin: CoreSyncPlugin (handles viewBox/padding sync)
+    const corePlugin = new CoreSyncPlugin();
+    const userPlugins = options.plugins || [];
+
     plugin.init(
       {
         emitter,
@@ -61,7 +65,7 @@ export class Editor implements IEditor {
         commander,
         state,
       },
-      options.plugins,
+      [corePlugin, ...userPlugins],
     );
     interaction.init({
       emitter,
@@ -70,26 +74,6 @@ export class Editor implements IEditor {
       state,
       interactions: options.interactions,
     });
-
-    this.registerSync(
-      'viewBox',
-      (val) => {
-        if (val) {
-          document.setAttribute('viewBox', val);
-        } else {
-          document.removeAttribute('viewBox');
-        }
-      },
-      { immediate: true },
-    );
-
-    this.registerSync(
-      'padding',
-      (val) => {
-        if (val !== undefined) setSVGPadding(document, parsePadding(val));
-      },
-      { immediate: true },
-    );
   }
 
   registerSync(
