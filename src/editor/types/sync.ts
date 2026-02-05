@@ -1,17 +1,17 @@
 /**
- * 同步回调
- * @param newValue 变更后的新值
- * @param oldValue 变更前的旧值。注意：当作为父路径冒泡通知触发时（即监听的是非叶子节点），此值为 undefined。
+ * Sync callback
+ * @param newValue The new value after modification
+ * @param oldValue The old value before modification. Note: This value is undefined when triggered by parent path bubbling notification (i.e., listening to a non-leaf node).
  */
 export type SyncHandler = (newValue: any, oldValue: any) => void;
 
 export interface ISyncRegistry {
   /**
-   * 注册同步逻辑
-   * @param path 配置路径，如 'design.background'
-   * @param handler 同步回调
-   * @param options.immediate 是否立即执行一次（用于初始化视图）
-   * @returns unregister 注销函数
+   * Register synchronization logic
+   * @param path Configuration path, such as 'design.background'
+   * @param handler Sync callback
+   * @param options.immediate Whether to execute immediately (used for view initialization)
+   * @returns unregister function
    */
   register(
     path: string,
@@ -20,10 +20,10 @@ export interface ISyncRegistry {
   ): () => void;
 
   /**
-   * 触发同步（通常由 StateManager 调用）
-   * @param path 配置路径
-   * @param newVal 新值
-   * @param oldVal 旧值
+   * Trigger synchronization (usually called by StateManager)
+   * @param path Configuration path
+   * @param newVal New value
+   * @param oldVal Old value
    */
   trigger(path: string, newVal: any, oldVal: any): void;
 

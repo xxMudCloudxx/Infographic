@@ -5,8 +5,8 @@ import type { Selection } from './selection';
 import type { IStateManager } from './state';
 
 /**
- * 常见键位的联合类型，利用 (string & {}) 技巧实现补全建议且不限制具体字符串
- * 参考：https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values
+ * Union type of common key codes, using (string & {}) trick to provide completion suggestions without limiting specific strings
+ * Reference: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values
  */
 export type KeyCode =
   | 'Space'
