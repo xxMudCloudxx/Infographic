@@ -37,9 +37,11 @@ export function applyOptionUpdates(
   // Bubbling notification: from the deepest parent path to the shallowest
   if (bubbleUp && collector && parentPathsToNotify.size > 0) {
     // Sort by path depth in descending order (deepest first)
-    const sortedPaths = Array.from(parentPathsToNotify).sort(
-      (a, b) => b.split('.').length - a.split('.').length,
-    );
+    const sortedPaths = Array.from(parentPathsToNotify).sort((a, b) => {
+      const depthA = a === '' ? 0 : a.split('.').length;
+      const depthB = b === '' ? 0 : b.split('.').length;
+      return depthB - depthA;
+    });
     for (const parentPath of sortedPaths) {
       const newVal = parentPath ? get(target, parentPath) : target;
       // For parent paths, we provide the cloned new value.
