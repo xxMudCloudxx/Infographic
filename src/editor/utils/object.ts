@@ -68,19 +68,29 @@ function applyOptionUpdatesInternal(
       }
     } else if (isPlainObject(updateValue)) {
       // Handle nested object
-      if (!isPlainObject(target[key])) {
+      const oldValueIsObject = isPlainObject(target[key]);
+      if (!oldValueIsObject) {
         target[key] = {};
-        // If strict value equality is needed for the object ref itself,
-        // one might consider firing collector here, but the legacy logic prioritizes leaf values.
       }
 
-      childChanged = applyOptionUpdatesInternal(
+      const grandChildChanged = applyOptionUpdatesInternal(
         target[key],
         updateValue,
         fullPath,
         collector,
         bubbleUp,
       );
+
+      if (!oldValueIsObject) {
+        // Overwriting a primitive with an object is always a change.
+        childChanged = true;
+        // If the object was empty (grandChildChanged is false), we still need to report it.
+        if (!grandChildChanged) {
+          collector?.(fullPath, target[key], oldValue);
+        }
+      } else {
+        childChanged = grandChildChanged;
+      }
     } else {
       // Handle primitive update
       target[key] = updateValue;

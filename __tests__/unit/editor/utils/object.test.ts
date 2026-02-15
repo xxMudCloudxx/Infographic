@@ -197,6 +197,21 @@ describe('applyOptionUpdates', () => {
     expect(target).toEqual({});
   });
 
+  it('detects change when primitive is replaced by empty object', () => {
+    const target = { a: 1 };
+    const source = { a: {} };
+    const collector = vi.fn();
+    applyOptionUpdates(target, source, '', { bubbleUp: true, collector });
+
+    expect(target.a).toEqual({});
+    // Even if 'a' itself doesn't fire as a leaf, the root MUST change because 'a' changed.
+    expect(collector).toHaveBeenCalledWith(
+      '',
+      expect.objectContaining({ a: {} }),
+      undefined,
+    );
+  });
+
   it('collects cloned values during bubble up to prevent side effects', () => {
     const target = { a: { b: 1 } };
     const source = { a: { b: 2 } };
