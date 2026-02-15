@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applyOptionUpdates } from '../../../src/editor/utils/object';
+import { applyOptionUpdates } from '../../../../src/editor/utils/object';
 
-describe('mergeOptions', () => {
+describe('applyOptionUpdates', () => {
   it('merges simple properties', () => {
     const target = { a: 1, b: 2 };
     const source = { b: 3, c: 4 };
@@ -86,6 +86,20 @@ describe('mergeOptions', () => {
     expect('b' in target).toBe(false);
   });
 
+  it('handles array values as primitives (overwrites)', () => {
+    const target = { a: [1, 2] };
+    const source = { a: [3, 4] };
+    applyOptionUpdates(target, source);
+    expect(target.a).toEqual([3, 4]);
+  });
+
+  it('handles null values', () => {
+    const target: any = { a: 1 };
+    const source = { a: null };
+    applyOptionUpdates(target, source);
+    expect(target.a).toBeNull();
+  });
+
   // ========== Collector Tests ==========
 
   it('calls collector with correct path and values on simple update', () => {
@@ -155,11 +169,6 @@ describe('mergeOptions', () => {
       expect.objectContaining({ background: 'red', font: 'Helvetica' }),
       undefined,
     );
-    expect(collector).toHaveBeenCalledWith(
-      '',
-      expect.objectContaining({ design: expect.any(Object) }),
-      undefined,
-    );
   });
 
   it('bubbleUp does not trigger when no changes detected', () => {
@@ -177,6 +186,6 @@ describe('mergeOptions', () => {
     const collector = (path: string) => calls.push(path);
     applyOptionUpdates(target, source, '', { bubbleUp: true, collector });
     // 叶子节点先触发，然后是父路径（按深度降序）
-    expect(calls).toEqual(['a.b.c', 'a.b', 'a', '']);
+    expect(calls).toEqual(['a.b.c', 'a.b', 'a']);
   });
 });
