@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const fallbackMeasureText = vi.fn(() => ({ width: 9, height: 11 }));
+const registerFontMock = vi.fn();
 
 vi.mock('measury', () => ({
   measureText: fallbackMeasureText,
-  registerFont: vi.fn(),
+  registerFont: registerFontMock,
 }));
 
 vi.mock('measury/fonts/AlibabaPuHuiTi-Regular', () => ({
@@ -13,11 +14,18 @@ vi.mock('measury/fonts/AlibabaPuHuiTi-Regular', () => ({
   },
 }));
 
+vi.mock('measury/fonts/851tegakizatsu-Regular', () => ({
+  default: {
+    fontFamily: '851tegakizatsu',
+  },
+}));
+
 describe('measureText', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.resetModules();
     fallbackMeasureText.mockClear();
+    registerFontMock.mockClear();
   });
 
   it('prefers canvas metrics when canvas is available even if layout is unavailable', async () => {
@@ -115,5 +123,32 @@ describe('measureText', () => {
     expect(metrics.width).toBe(10);
     expect(metrics.height).toBe(12);
     expect(fallbackMeasureText).toHaveBeenCalledTimes(1);
+  });
+
+  it('lazily registers 851tegakizatsu when font-family is a stack in SSR path', async () => {
+    const { measureText } = await import('../../../src/utils/measure-text');
+    vi.stubGlobal('window', undefined);
+    vi.stubGlobal('document', undefined);
+
+    measureText('主流前端框架对比', {
+      fontFamily: '"851tegakizatsu", sans-serif',
+      fontSize: 24,
+      fontWeight: 'normal',
+    });
+
+    expect(registerFontMock).toHaveBeenCalledTimes(2);
+    expect(registerFontMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ fontFamily: '851tegakizatsu' }),
+    );
+
+    measureText('主流前端框架对比', {
+      fontFamily: '851tegakizatsu, sans-serif',
+      fontSize: 24,
+      fontWeight: 'normal',
+    });
+
+    expect(registerFontMock).toHaveBeenCalledTimes(2);
+    expect(fallbackMeasureText).toHaveBeenCalledTimes(2);
   });
 });

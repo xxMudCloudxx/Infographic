@@ -11,7 +11,7 @@ import {
   ParsedInfographicOptions,
   parseOptions,
 } from '../options';
-import { Renderer } from '../renderer';
+import { DEFAULT_FONT, Renderer, setDefaultFont } from '../renderer';
 import { waitForSvgLoads } from '../resource';
 import { parseSyntax, type SyntaxError } from '../syntax';
 import { IEventEmitter } from '../types';
@@ -133,12 +133,17 @@ export class Infographic {
    * Compose the SVG template
    */
   compose(parsedOptions: ParsedInfographicOptions): SVGSVGElement {
-    const { design, data } = parsedOptions;
+    const { design, data, themeConfig } = parsedOptions;
     const { title, item, items, structure } = design;
     const { component: Structure, props: structureProps } = structure;
     const Title = title.component;
     const Item = item.component;
     const Items = items.map((it) => it.component);
+
+    // Apply theme font-family before measurement so measureText uses the correct font
+    const themeFontFamily = themeConfig?.base?.text?.['font-family'];
+    const previousDefaultFont = DEFAULT_FONT;
+    if (themeFontFamily) setDefaultFont(themeFontFamily);
 
     const svg = renderSVG(
       <Structure
@@ -150,6 +155,9 @@ export class Infographic {
         {...structureProps}
       />,
     );
+
+    // Restore previous default font
+    if (themeFontFamily) setDefaultFont(previousDefaultFont);
 
     const template = parseSVG(svg);
     if (!template) {

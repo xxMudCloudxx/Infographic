@@ -1,8 +1,9 @@
 import { measureText as measure, registerFont } from 'measury';
+import Tegakizatsu from 'measury/fonts/851tegakizatsu-Regular';
 import AlibabaPuHuiTi from 'measury/fonts/AlibabaPuHuiTi-Regular';
 import { JSXNode, TextProps } from '../jsx';
 import { DEFAULT_FONT } from '../renderer';
-import { encodeFontFamily } from './font';
+import { decodeFontFamily, encodeFontFamily } from './font';
 
 let FONT_EXTEND_FACTOR = 1.015;
 
@@ -11,6 +12,22 @@ export const setFontExtendFactor = (factor: number) => {
 };
 
 registerFont(AlibabaPuHuiTi);
+
+// Lazy-register extra measury fonts on first use (SSR only needs glyph data).
+const EXTRA_MEASURY_FONTS: Record<string, Parameters<typeof registerFont>[0]> =
+  { '851tegakizatsu': Tegakizatsu };
+const registeredMeasuryFonts = new Set<string>();
+
+function ensureMeasuryFont(fontFamily: string) {
+  // decodeFontFamily: '"851tegakizatsu", sans-serif' → '851tegakizatsu, sans-serif'
+  // split by comma and take the first family name
+  const primary = decodeFontFamily(fontFamily).split(',')[0].trim();
+  if (!primary || registeredMeasuryFonts.has(primary)) return;
+  const data = EXTRA_MEASURY_FONTS[primary];
+  if (!data) return;
+  registerFont(data);
+  registeredMeasuryFonts.add(primary);
+}
 
 let canvasContext: CanvasRenderingContext2D | null | undefined = undefined;
 let measureSpan: HTMLSpanElement | null = null;
@@ -121,6 +138,7 @@ export function measureText(
   } = attrs;
 
   const content = text.toString();
+  ensureMeasuryFont(fontFamily);
   const options = {
     fontFamily,
     fontSize: parseFloat(fontSize.toString()),
