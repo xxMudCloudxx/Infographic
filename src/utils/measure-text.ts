@@ -21,7 +21,7 @@ const registeredMeasuryFonts = new Set<string>();
 function ensureMeasuryFont(fontFamily: string) {
   // decodeFontFamily: '"851tegakizatsu", sans-serif' → '851tegakizatsu, sans-serif'
   // split by comma and take the first family name
-  const primary = decodeFontFamily(fontFamily).split(',')[0].trim();
+  const primary = decodeFontFamily(fontFamily)?.split(',')[0]?.trim();
   if (!primary || registeredMeasuryFonts.has(primary)) return;
   const data = EXTRA_MEASURY_FONTS[primary];
   if (!data) return;

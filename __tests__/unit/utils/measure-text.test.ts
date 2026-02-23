@@ -23,6 +23,7 @@ vi.mock('measury/fonts/851tegakizatsu-Regular', () => ({
 describe('measureText', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     vi.resetModules();
     fallbackMeasureText.mockClear();
     registerFontMock.mockClear();

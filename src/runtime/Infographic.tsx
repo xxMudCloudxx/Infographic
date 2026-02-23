@@ -145,25 +145,27 @@ export class Infographic {
     const previousDefaultFont = DEFAULT_FONT;
     if (themeFontFamily) setDefaultFont(themeFontFamily);
 
-    const svg = renderSVG(
-      <Structure
-        data={data}
-        Title={Title}
-        Item={Item}
-        Items={Items}
-        options={parsedOptions}
-        {...structureProps}
-      />,
-    );
+    try {
+      const svg = renderSVG(
+        <Structure
+          data={data}
+          Title={Title}
+          Item={Item}
+          Items={Items}
+          options={parsedOptions}
+          {...structureProps}
+        />,
+      );
 
-    // Restore previous default font
-    if (themeFontFamily) setDefaultFont(previousDefaultFont);
-
-    const template = parseSVG(svg);
-    if (!template) {
-      throw new Error('Failed to parse SVG template');
+      const template = parseSVG(svg);
+      if (!template) {
+        throw new Error('Failed to parse SVG template');
+      }
+      return template;
+    } finally {
+      // Restore previous default font
+      if (themeFontFamily) setDefaultFont(previousDefaultFont);
     }
-    return template;
   }
 
   getTypes() {
