@@ -1,6 +1,10 @@
 import { measureText as measure, registerFont } from 'measury';
 import Tegakizatsu from 'measury/fonts/851tegakizatsu-Regular';
 import AlibabaPuHuiTi from 'measury/fonts/AlibabaPuHuiTi-Regular';
+import Arial from 'measury/fonts/Arial-Regular';
+import LXGWWenKai from 'measury/fonts/LXGWWenKai-Regular';
+import SourceHanSans from 'measury/fonts/SourceHanSans-Regular';
+import SourceHanSerif from 'measury/fonts/SourceHanSerif-Regular';
 import { JSXNode, TextProps } from '../jsx';
 import { DEFAULT_FONT } from '../renderer';
 import { decodeFontFamily, encodeFontFamily } from './font';
@@ -15,7 +19,13 @@ registerFont(AlibabaPuHuiTi);
 
 // Lazy-register extra measury fonts on first use (SSR only needs glyph data).
 const EXTRA_MEASURY_FONTS: Record<string, Parameters<typeof registerFont>[0]> =
-  { '851tegakizatsu': Tegakizatsu };
+  {
+    '851tegakizatsu': Tegakizatsu,
+    Arial: Arial,
+    'LXGW WenKai': LXGWWenKai,
+    'Source Han Sans': SourceHanSans,
+    'Source Han Serif': SourceHanSerif,
+  };
 const registeredMeasuryFonts = new Set<string>();
 
 function ensureMeasuryFont(fontFamily: string) {
@@ -145,7 +155,11 @@ export function measureText(
     fontWeight,
     lineHeight,
   };
-  const fallback = () => measure(content, options);
+  const fallback = () =>
+    measure(content, {
+      ...options,
+      fontFamily: decodeFontFamily(fontFamily),
+    });
   const metrics = measureTextInBrowser(content, options) ?? fallback();
 
   // 额外添加 1% 宽高
