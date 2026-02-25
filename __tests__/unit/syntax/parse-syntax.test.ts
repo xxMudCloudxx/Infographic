@@ -261,7 +261,12 @@ data
       { id: 'B', label: 'B' },
     ]);
     expect(result.options.data?.relations).toEqual([
-      { from: 'client-established', to: 'server-established', label: '数据传输', direction: 'both' },
+      {
+        from: 'client-established',
+        to: 'server-established',
+        label: '数据传输',
+        direction: 'both',
+      },
       { from: 'A', to: 'B', label: 'Transfer', direction: 'both' },
     ]);
   });
