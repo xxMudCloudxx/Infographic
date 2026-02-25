@@ -61,6 +61,7 @@ theme
 - 主数据字段选择（只用一个，避免混用）：
   - `list-*` → `lists`
   - `sequence-*` → `sequences`（可选 `order asc|desc`）
+  - `sequence-interaction-*` → `sequences`（泳道列表，每个泳道包含 `label` 和 `children`）+ `relations`（节点间关系）；`children` 中的节点可用 `step` 字段指定时间层级（相同 step 的节点处于同一高度）
   - `compare-*` → `compares`（支持 `children` 分组对比），可包含多个对比项
   - `hierarchy-structure` → `items`（每一项对应一个独立层级，每一层级可以包含子项，最多可嵌套 3 层）
   - `hierarchy-*` → 单一 `root`（树结构，通过 `children` 嵌套）；
@@ -126,6 +127,55 @@ data
     - label Step 2
     - label Step 3
   order asc
+```
+
+- `sequence-interaction-*` 模版（交互流程/时序图）
+
+```infographic
+infographic sequence-interaction-compact-animated-badge-card
+data
+  title TCP三次握手
+  desc 客户端与服务器建立可靠连接的过程
+  sequences
+    - label 客户端
+      icon mingcute/computer-line
+      children
+        - label CLOSED
+          id client-closed
+          icon mingcute/close-circle-line
+          step 0
+        - label SYN-SENT
+          id client-syn-sent
+          icon mingcute/send-line
+          step 2
+        - label ESTABLISHED
+          id client-established
+          icon mingcute/check-circle-line
+          step 4
+    - label 服务器
+      icon mingcute/server-line
+      children
+        - label CLOSED
+          id server-closed
+          icon mingcute/close-circle-line
+          step 0
+        - label LISTEN
+          id server-listen
+          icon mingcute/ear-line
+          step 1
+        - label SYN-RCVD
+          id server-syn-rcvd
+          icon mingcute/receive-line
+          step 3
+        - label ESTABLISHED
+          id server-established
+          icon mingcute/check-circle-line
+          step 4
+  relations
+    client-closed - SYN=1, seq=x -> server-listen
+    server-listen - SYN=1, ACK=1, seq=y, ack=x+1 -> client-syn-sent
+    client-syn-sent - ACK=1, seq=x+1, ack=y+1 -> server-syn-rcvd
+    client-established <- 数据传输 -> server-established
 ```
 
 - `hierarchy-*` 模版
@@ -273,6 +323,13 @@ data
 - sequence-timeline-simple
 - sequence-zigzag-pucks-3d-simple
 - sequence-zigzag-steps-underline-text
+- sequence-interaction-default-badge-card
+- sequence-interaction-default-animated-badge-card
+- sequence-interaction-default-dashed-badge-card
+- sequence-interaction-compact-badge-card
+- sequence-interaction-wide-badge-card
+- sequence-interaction-default-compact-card
+- sequence-interaction-default-capsule-item
 
 **模板选择建议：**
 
@@ -284,6 +341,12 @@ data
   - 环形进度 → `sequence-circular-simple`
   - 彩色蛇形步骤 → `sequence-color-snake-steps-*`
   - 金字塔 → `sequence-pyramid-simple`
+- 交互流程/时序图（多角色/系统间的交互）→ `sequence-interaction-*`
+  - 标准间距 → `sequence-interaction-default-*`
+  - 紧凑布局 → `sequence-interaction-compact-*`
+  - 宽松布局 → `sequence-interaction-wide-*`
+  - 虚线箭头 → `sequence-interaction-*-dashed-*`
+  - 动画箭头 → `sequence-interaction-*-animated-*`
 - 观点列举 → `list-row-*` 或 `list-column-*`
 - 二元对比（利弊）→ `compare-binary-*`
 - SWOT → `compare-swot`
