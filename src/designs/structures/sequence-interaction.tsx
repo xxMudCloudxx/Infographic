@@ -524,14 +524,15 @@ export const SequenceInteractionFlow: ComponentType<
       );
 
       // 添加节点背景遮挡层，防止生命线虚线透过半透明节点显示
+      // 只在节点中心放置窄条遮挡生命线，避免圆角处露出白色背景
+      const maskStripWidth = lifelineWidth + 6;
       decorElements.push(
         <Rect
-          x={x}
+          x={centerX - maskStripWidth / 2}
           y={y}
-          width={itemWidth}
+          width={maskStripWidth}
           height={itemHeight}
           fill={colorBg}
-          rx={CORNER_RADIUS_NODE}
         />,
       );
 
