@@ -127,6 +127,19 @@ export function parseSyntax(input: string): SyntaxParseResult {
           }
         }
 
+        // 如果 items 已包含层级结构数据（带 children），也视为结构化数据
+        if (
+          !hasStructuredData &&
+          Array.isArray(current.items) &&
+          current.items.length > 0 &&
+          current.items.some(
+            (item: any) =>
+              Array.isArray(item.children) && item.children.length > 0,
+          )
+        ) {
+          hasStructuredData = true;
+        }
+
         // 如果没有找到其他数据源，才尝试合并 items
         if (!hasStructuredData) {
           const existingItems = Array.isArray(current.items)
