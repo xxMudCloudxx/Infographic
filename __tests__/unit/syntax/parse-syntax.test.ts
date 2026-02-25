@@ -245,6 +245,27 @@ data
     ]);
   });
 
+  it('parses split bidirectional arrow <- label ->', () => {
+    const input = `
+data
+  relations
+    client-established <- 数据传输 -> server-established
+    A <-- Transfer --> B
+`;
+    const result = parseSyntax(input);
+    expect(result.errors).toHaveLength(0);
+    expect(result.options.data?.items).toEqual([
+      { id: 'client-established', label: 'client-established' },
+      { id: 'server-established', label: 'server-established' },
+      { id: 'A', label: 'A' },
+      { id: 'B', label: 'B' },
+    ]);
+    expect(result.options.data?.relations).toEqual([
+      { from: 'client-established', to: 'server-established', label: '数据传输', direction: 'both' },
+      { from: 'A', to: 'B', label: 'Transfer', direction: 'both' },
+    ]);
+  });
+
   it('treats marker arrows as bidirectional when on both sides', () => {
     const input = `
 data

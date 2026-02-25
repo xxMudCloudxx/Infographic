@@ -126,13 +126,18 @@ function stringifyObject(
       if (value.length === 0) return;
       lines.push(`${indent}${key}`);
       value.forEach((relation: any) => {
-        const {from, to, label} = relation;
+        const {from, to, label, direction} = relation;
         if (from && to) {
-          lines.push(
-            `${indent}${INDENT}${
-              label ? `${from} - ${label} -> ${to}` : `${from} -> ${to}`
-            }`
-          );
+          const labelText = label ? stringifyScalar(label) : '';
+          const line =
+            direction === 'both'
+              ? labelText
+                ? `${indent}${INDENT}${from} <- ${labelText} -> ${to}`
+                : `${indent}${INDENT}${from} <-> ${to}`
+              : labelText
+                ? `${indent}${INDENT}${from} - ${labelText} -> ${to}`
+                : `${indent}${INDENT}${from} -> ${to}`;
+          lines.push(line);
         }
       });
       return;

@@ -125,6 +125,33 @@ function readEdge(text: string, startIndex: number): ParsedEdge | null {
   let directionToken = arrowToken;
   let index = arrowEnd;
 
+  // Detect split bidirectional arrow pattern: <- label ->
+  {
+    const leftHasLeft = directionToken.includes('<');
+    const leftHasRight = directionToken.includes('>');
+    if (leftHasLeft && !leftHasRight) {
+      const lookahead = new RegExp(ARROW_TOKEN.source, 'g');
+      lookahead.lastIndex = arrowEnd;
+      const rightMatch = lookahead.exec(text);
+      if (
+        rightMatch &&
+        rightMatch[0].includes('>') &&
+        !rightMatch[0].includes('<')
+      ) {
+        const middleText = text.slice(arrowEnd, rightMatch.index).trim();
+        if (middleText) {
+          const splitLabel = normalizeLabel(middleText);
+          return {
+            label: splitLabel || label,
+            direction: 'both',
+            reverse: false,
+            nextIndex: rightMatch.index + rightMatch[0].length,
+          };
+        }
+      }
+    }
+  }
+
   index = skipSpaces(text, index);
   if (text[index] === '|') {
     const pipeEnd = text.indexOf('|', index + 1);
