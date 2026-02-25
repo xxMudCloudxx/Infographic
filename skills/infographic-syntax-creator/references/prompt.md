@@ -325,11 +325,9 @@ data
 - sequence-zigzag-steps-underline-text
 - sequence-interaction-default-badge-card
 - sequence-interaction-default-animated-badge-card
-- sequence-interaction-default-dashed-badge-card
-- sequence-interaction-compact-badge-card
-- sequence-interaction-wide-badge-card
 - sequence-interaction-default-compact-card
 - sequence-interaction-default-capsule-item
+- sequence-interaction-default-rounded-rect-node
 
 **模板选择建议：**
 
