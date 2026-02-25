@@ -34,7 +34,7 @@
   <a href="https://infographic.antv.vision/gallery">
     <img src="https://img.shields.io/badge/Gallery-13C2C2?style=for-the-badge" alt="Gallery" />
   </a>
-  <a href="https://github.com/antvis/Infographic/tree/main/.skills">
+  <a href="https://github.com/antvis/Infographic/tree/main/skills">
     <img src="https://img.shields.io/badge/Skills-FA8C16?style=for-the-badge" alt="Skills" />
   </a>
   <a href="https://infographic.antv.vision/ai">
@@ -121,12 +121,19 @@ AntV Infographic provides skills to integrate with AI agents:
 
 ### Claude Code
 
-> We don't have a Claude marketplace entry yet, so install manually.
+> Claude marketplace is now available. You can install from marketplace, or keep using manual install.
+
+```bash
+/plugin marketplace add https://github.com/antvis/Infographic.git
+/plugin install antv-infographic-skills@antv-infographic
+```
+
+Manual install:
 
 ```bash
 set -e
 
-VERSION=0.2.4 # Replace with the latest tag, e.g. 0.2.4
+VERSION=0.2.4 # Replace with the latest tag, e.g. 0.2.14
 BASE_URL=https://github.com/antvis/Infographic/releases/download
 mkdir -p .claude/skills
 
@@ -141,8 +148,8 @@ rm -f skills.zip
 
 ```codex
 # Replace <SKILL> with the skill name, e.g. infographic-creator
-# https://github.com/antvis/Infographic/tree/main/.skills/<SKILL>
-$skill-installer install https://github.com/antvis/Infographic/tree/main/.skills/infographic-creator
+# https://github.com/antvis/Infographic/tree/main/skills/<SKILL>
+$skill-installer install https://github.com/antvis/Infographic/tree/main/skills/infographic-creator
 ```
 
 ## 💬 Community & Communication

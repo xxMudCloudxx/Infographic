@@ -34,7 +34,7 @@
   <a href="https://infographic.antv.vision/gallery">
     <img src="https://img.shields.io/badge/%E7%A4%BA%E4%BE%8B-13C2C2?style=for-the-badge" alt="示例" />
   </a>
-  <a href="https://github.com/antvis/Infographic/tree/main/.skills">
+  <a href="https://github.com/antvis/Infographic/tree/main/skills">
     <img src="https://img.shields.io/badge/Skills-FA8C16?style=for-the-badge" alt="Skills" />
   </a>
   <a href="https://infographic.antv.vision/ai">
@@ -121,12 +121,19 @@ AntV Infographic 提供了多项能力，便于与 AI 大模型集成：
 
 ### Claude Code
 
-> 我们暂未提供 claude marketplace，因此需要手动集成。
+> 已提供 Claude marketplace，可通过 marketplace 安装，也可继续手动集成。
+
+```bash
+/plugin marketplace add https://github.com/antvis/Infographic.git
+/plugin install antv-infographic-skills@antv-infographic
+```
+
+手动集成：
 
 ```bash
 set -e
 
-VERSION=0.2.4 # 替换为最新版本号，例如 0.2.4
+VERSION=0.2.4 # 替换为最新版本号，例如 0.2.14
 BASE_URL=https://github.com/antvis/Infographic/releases/download
 mkdir -p .claude/skills
 
@@ -141,8 +148,8 @@ rm -f skills.zip
 
 ```codex
 # 将 <SKILL> 替换为需要安装的 skill 名称，例如 infographic-creator
-# https://github.com/antvis/Infographic/tree/main/.skills/<SKILL>
-$skill-installer install https://github.com/antvis/Infographic/tree/main/.skills/infographic-creator
+# https://github.com/antvis/Infographic/tree/main/skills/<SKILL>
+$skill-installer install https://github.com/antvis/Infographic/tree/main/skills/infographic-creator
 ```
 
 ## 💬 社区与交流
