@@ -1,8 +1,13 @@
 import { measureText as measure, registerFont } from 'measury';
+import Tegakizatsu from 'measury/fonts/851tegakizatsu-Regular';
 import AlibabaPuHuiTi from 'measury/fonts/AlibabaPuHuiTi-Regular';
+import Arial from 'measury/fonts/Arial-Regular';
+import LXGWWenKai from 'measury/fonts/LXGWWenKai-Regular';
+import SourceHanSans from 'measury/fonts/SourceHanSans-Regular';
+import SourceHanSerif from 'measury/fonts/SourceHanSerif-Regular';
 import { JSXNode, TextProps } from '../jsx';
 import { DEFAULT_FONT } from '../renderer';
-import { encodeFontFamily } from './font';
+import { decodeFontFamily, encodeFontFamily } from './font';
 
 let FONT_EXTEND_FACTOR = 1.015;
 
@@ -11,6 +16,28 @@ export const setFontExtendFactor = (factor: number) => {
 };
 
 registerFont(AlibabaPuHuiTi);
+
+// Lazy-register extra measury fonts on first use (SSR only needs glyph data).
+const EXTRA_MEASURY_FONTS: Record<string, Parameters<typeof registerFont>[0]> =
+  {
+    '851tegakizatsu': Tegakizatsu,
+    Arial: Arial,
+    'LXGW WenKai': LXGWWenKai,
+    'Source Han Sans': SourceHanSans,
+    'Source Han Serif': SourceHanSerif,
+  };
+const registeredMeasuryFonts = new Set<string>();
+
+function ensureMeasuryFont(fontFamily: string) {
+  // decodeFontFamily: '"851tegakizatsu", sans-serif' → '851tegakizatsu, sans-serif'
+  // split by comma and take the first family name
+  const primary = decodeFontFamily(fontFamily)?.split(',')[0]?.trim();
+  if (!primary || registeredMeasuryFonts.has(primary)) return;
+  const data = EXTRA_MEASURY_FONTS[primary];
+  if (!data) return;
+  registerFont(data);
+  registeredMeasuryFonts.add(primary);
+}
 
 let canvasContext: CanvasRenderingContext2D | null | undefined = undefined;
 let measureSpan: HTMLSpanElement | null = null;
@@ -121,13 +148,18 @@ export function measureText(
   } = attrs;
 
   const content = text.toString();
+  ensureMeasuryFont(fontFamily);
   const options = {
     fontFamily,
     fontSize: parseFloat(fontSize.toString()),
     fontWeight,
     lineHeight,
   };
-  const fallback = () => measure(content, options);
+  const fallback = () =>
+    measure(content, {
+      ...options,
+      fontFamily: decodeFontFamily(fontFamily),
+    });
   const metrics = measureTextInBrowser(content, options) ?? fallback();
 
   // 额外添加 1% 宽高
