@@ -3,8 +3,8 @@ import { mapWithSchema } from './mapper';
 import { RelationSchema } from './schema';
 import type { SyntaxError, SyntaxNode } from './types';
 
-const RELATION_TOKEN = /[<>=o.x-]{2,}/;
-const ARROW_TOKEN = /[<>=o.x-]{2,}/g;
+const RELATION_TOKEN = /(?:[<>o.x-]{2,}|[<>=]{2,})/;
+const ARROW_TOKEN = /(?:[<>o.x-]{2,}|[<>=]{2,})/g;
 
 interface ParsedNode {
   id: string;
@@ -124,6 +124,33 @@ function readEdge(text: string, startIndex: number): ParsedEdge | null {
   let label = labelPrefix || undefined;
   let directionToken = arrowToken;
   let index = arrowEnd;
+
+  // Detect split bidirectional arrow pattern: <- label ->
+  {
+    const leftHasLeft = directionToken.includes('<');
+    const leftHasRight = directionToken.includes('>');
+    if (leftHasLeft && !leftHasRight) {
+      const lookahead = new RegExp(ARROW_TOKEN.source, 'g');
+      lookahead.lastIndex = arrowEnd;
+      const rightMatch = lookahead.exec(text);
+      if (
+        rightMatch &&
+        rightMatch[0].includes('>') &&
+        !rightMatch[0].includes('<')
+      ) {
+        const middleText = text.slice(arrowEnd, rightMatch.index).trim();
+        if (middleText) {
+          const splitLabel = normalizeLabel(middleText);
+          return {
+            label: splitLabel || label,
+            direction: 'both',
+            reverse: false,
+            nextIndex: rightMatch.index + rightMatch[0].length,
+          };
+        }
+      }
+    }
+  }
 
   index = skipSpaces(text, index);
   if (text[index] === '|') {
