@@ -152,6 +152,33 @@ rm -f skills.zip
 $skill-installer install https://github.com/antvis/Infographic/tree/main/skills/infographic-creator
 ```
 
+## 🌐 Ecosystem
+
+Community projects and products powered by AntV Infographic:
+
+- 💼 **Products**
+  - [Alma](https://alma.now/) — Desktop AI provider orchestration app with Infographic
+  - [Chrome Extension](https://github.com/xicilion/markdown-viewer-extension) — Markdown viewer with Infographic support, export to Word
+  - [InfographicAI](https://infographic-ai.tuntun.site/) — Generate PPT slides powered by Infographic
+  - [LangChat Slides](https://github.com/TyCoding/langchat-slides) — Next-Gen AI Slide Generator using @antv/infographic
+  - [Nowledge Mem](https://mem.nowledge.co/) — AI Memory Bank with Presentation Creator supporting Infographic
+  - [WeChat Markdown Editor](https://md.doocs.org/) — Markdown to WeChat article editor with Infographic
+  - [Welight](https://waer.ltd/) — WeChat article creation platform with Infographic support
+  - [Zojo](https://zojo.ai/infographic) — Generate professional infographics with simple syntax
+- 📦 **Libraries**
+  - [astro-koharu](https://github.com/cosZone/astro-koharu) — Anime blog theme (Astro) with Infographic support
+  - [docsify-infographic](https://github.com/bulexu/docsify-infographic) — Plugin to render Infographic diagrams in Docsify
+  - [feffery-infographic](https://github.com/HogaStack/feffery-infographic) — Create infographics in Python with Plotly Dash
+  - [infographic-cli](https://github.com/lyw405/infographic-cli) — CLI tool to generate SVG infographics
+  - [infographic-for-react](https://github.com/lyw405/infographic-for-react) — React component wrapper for @antv/infographic
+  - [markdown-it-infographic](https://github.com/hcg1023/markdown-it-infographic) — markdown-it plugin for @antv/infographic
+  - [markstream-vue](https://github.com/Simon-He95/markstream-vue) — Streaming Markdown rendering for Vue 3 with Infographic
+  - [obsidian-infographic](https://github.com/hcg1023/obsidian-infographic) — Obsidian plugin for @antv/infographic
+  - [slidev-addon-infographic](https://github.com/fxss5201/slidev-addon-infographic) — @antv/infographic component for Slidev
+  - [VSCode Extension](https://github.com/liwx2000/infographic-vscode-extension) — Preview Infographic in VSCode Markdown files
+
+> 💡 Have a project using AntV Infographic? Share it in [Issue #99](https://github.com/antvis/Infographic/issues/99)!
+
 ## 💬 Community & Communication
 
 - Submit your questions or suggestions on GitHub
