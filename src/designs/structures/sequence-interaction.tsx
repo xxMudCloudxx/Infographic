@@ -588,28 +588,31 @@ export const SequenceInteractionFlow: ComponentType<
 
   // 绘制生命线（使用 mask 挖空节点区域，避免虚线穿透半透明节点）
   if (showLifeline) {
+    // 预先按泳道分组节点，避免每条泳道都遍历全部节点
+    const nodeRectsByLane = new Map<
+      number,
+      { x: number; y: number; width: number; height: number }[]
+    >();
+    nodeLayoutById.forEach((layout) => {
+      let list = nodeRectsByLane.get(layout.laneIndex);
+      if (!list) {
+        list = [];
+        nodeRectsByLane.set(layout.laneIndex, list);
+      }
+      list.push({
+        x: layout.x,
+        y: layout.y,
+        width: layout.width,
+        height: layout.height,
+      });
+    });
+
     lanes.forEach((_lane, laneIndex) => {
       const centerX = getLaneCenterX(laneIndex);
       const startY = padding + headerOffset;
       const endY = totalHeight - padding;
 
-      // 收集该泳道上所有节点的矩形区域
-      const laneNodeRects: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-      }[] = [];
-      nodeLayoutById.forEach((layout) => {
-        if (layout.laneIndex === laneIndex) {
-          laneNodeRects.push({
-            x: layout.x,
-            y: layout.y,
-            width: layout.width,
-            height: layout.height,
-          });
-        }
-      });
+      const laneNodeRects = nodeRectsByLane.get(laneIndex) ?? [];
 
       // 如果该泳道有节点，创建 mask 来挖空节点区域
       let lifelineMaskAttr: string | undefined;
