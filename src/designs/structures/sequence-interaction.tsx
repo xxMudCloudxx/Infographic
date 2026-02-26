@@ -100,6 +100,7 @@ const DEFAULT_ITEM_HEIGHT = 50;
 const FONT_SIZE = 14;
 const ARROW_SIZE = 14;
 const CORNER_RADIUS_NODE = 6;
+const LIFELINE_MASK_GAP = 2;
 const LANE_PADDING = 60;
 
 const BTN_HALF_SIZE = 12;
@@ -419,39 +420,6 @@ export const SequenceInteractionFlow: ComponentType<
   const defsElements: JSXElement[] = [];
   const btnElements: JSXElement[] = [];
 
-  // 绘制生命线
-  if (showLifeline) {
-    lanes.forEach((_lane, laneIndex) => {
-      const centerX = getLaneCenterX(laneIndex);
-      const startY = padding + headerOffset;
-      const endY = totalHeight - padding;
-
-      decorElements.push(
-        <Path
-          d={`M ${centerX} ${startY} L ${centerX} ${endY}`}
-          stroke={colorBorder}
-          strokeWidth={lifelineWidth}
-          strokeDasharray="5,5"
-          fill="none"
-          data-element-type="shape"
-        />,
-      );
-
-      // 绘制生命线末端箭头（实心）
-      decorElements.push(
-        ...createArrowElements(
-          centerX,
-          endY,
-          Math.PI / 2,
-          'triangle',
-          colorBorder,
-          1,
-          10,
-        ),
-      );
-    });
-  }
-
   // 绘制泳道标题
   if (showLaneHeader) {
     lanes.forEach((lane, laneIndex) => {
@@ -521,19 +489,6 @@ export const SequenceInteractionFlow: ComponentType<
       const nodeThemeColors = getThemeColors(
         { colorPrimary: nodeColor },
         options,
-      );
-
-      // 添加节点背景遮挡层，防止生命线虚线透过半透明节点显示
-      // 只在节点中心放置窄条遮挡生命线，避免圆角处露出白色背景
-      const maskStripWidth = lifelineWidth + 6;
-      decorElements.push(
-        <Rect
-          x={centerX - maskStripWidth / 2}
-          y={y}
-          width={maskStripWidth}
-          height={itemHeight}
-          fill={colorBg}
-        />,
       );
 
       // 构造类似 hierarchy-tree 的 _originalIndex
@@ -630,6 +585,94 @@ export const SequenceInteractionFlow: ComponentType<
       />,
     );
   });
+
+  // 绘制生命线（使用 mask 挖空节点区域，避免虚线穿透半透明节点）
+  if (showLifeline) {
+    lanes.forEach((_lane, laneIndex) => {
+      const centerX = getLaneCenterX(laneIndex);
+      const startY = padding + headerOffset;
+      const endY = totalHeight - padding;
+
+      // 收集该泳道上所有节点的矩形区域
+      const laneNodeRects: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      }[] = [];
+      nodeLayoutById.forEach((layout) => {
+        if (layout.laneIndex === laneIndex) {
+          laneNodeRects.push({
+            x: layout.x,
+            y: layout.y,
+            width: layout.width,
+            height: layout.height,
+          });
+        }
+      });
+
+      // 如果该泳道有节点，创建 mask 来挖空节点区域
+      let lifelineMaskAttr: string | undefined;
+      if (laneNodeRects.length > 0) {
+        const maskId = `lifeline-mask-${instanceId}-${laneIndex}`;
+        defsElements.push(
+          <mask
+            id={maskId}
+            maskUnits="userSpaceOnUse"
+            x={0}
+            y={0}
+            width={totalWidth}
+            height={totalHeight}
+          >
+            {/* 白色底：显示所有线条 */}
+            <Rect
+              x={0}
+              y={0}
+              width={totalWidth}
+              height={totalHeight}
+              fill="white"
+            />
+            {/* 黑色块：在节点位置挖空生命线，上下各留 LIFELINE_MASK_GAP 间距 */}
+            {laneNodeRects.map((rect) => (
+              <Rect
+                x={rect.x}
+                y={rect.y - LIFELINE_MASK_GAP}
+                width={rect.width}
+                height={rect.height + LIFELINE_MASK_GAP * 2}
+                fill="black"
+              />
+            ))}
+          </mask>,
+        );
+        lifelineMaskAttr = `url(#${maskId})`;
+      }
+
+      decorElements.push(
+        <Path
+          d={`M ${centerX} ${startY} L ${centerX} ${endY}`}
+          stroke={colorBorder}
+          strokeWidth={lifelineWidth}
+          strokeDasharray="5,5"
+          fill="none"
+          data-element-type="shape"
+          mask={lifelineMaskAttr}
+        />,
+      );
+
+      // 绘制生命线末端箭头（实心）
+      decorElements.push(
+        ...createArrowElements(
+          centerX,
+          endY,
+          Math.PI / 2,
+          'triangle',
+          colorBorder,
+          1,
+          10,
+        ),
+      );
+    });
+  }
 
   // 添加新泳道按钮 (最右侧)
   const lastLaneRightX = getLaneCenterX(lanes.length - 1) + laneWidth / 2;
