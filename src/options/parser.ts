@@ -35,7 +35,7 @@ export function parseOptions(
 
   const parsedContainer =
     typeof container === 'string'
-      ? resolveContainer(container) || document.createElement('div')
+      ? document.querySelector(container) || document.createElement('div')
       : container;
 
   const templateOptions: TemplateOptions | undefined = template
@@ -88,31 +88,6 @@ export function parseOptions(
     parsed.themeConfig = resolvedThemeConfig;
   }
   return parsed;
-}
-
-function resolveContainer(selector: string): Element | null {
-  const directMatch = document.querySelector(selector);
-  if (directMatch) return directMatch;
-
-  return queryInShadowRoots(document, selector);
-}
-
-function queryInShadowRoots(
-  root: Document | ShadowRoot,
-  selector: string,
-): Element | null {
-  for (const element of root.querySelectorAll('*')) {
-    const shadowRoot = element.shadowRoot;
-    if (!shadowRoot) continue;
-
-    const match = shadowRoot.querySelector(selector);
-    if (match) return match;
-
-    const nestedMatch = queryInShadowRoots(shadowRoot, selector);
-    if (nestedMatch) return nestedMatch;
-  }
-
-  return null;
 }
 
 export function parseData(

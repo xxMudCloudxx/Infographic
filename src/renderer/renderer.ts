@@ -88,6 +88,7 @@ export class Renderer implements IRenderer {
       try {
         observer.observe(this.options.container, {
           childList: true,
+          subtree: true,
         });
       } catch (error) {
         // Fallback for micro-app environments that proxy document.
