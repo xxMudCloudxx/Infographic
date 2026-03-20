@@ -198,6 +198,18 @@ describe('parseOptions', () => {
     );
   });
 
+  it('accepts a ShadowRoot instance as the container target', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const shadowRoot = host.attachShadow({ mode: 'open' });
+    const parsed = parseOptions({
+      container: shadowRoot,
+    } as any);
+
+    expect(parsed.container).toBe(shadowRoot);
+  });
+
   it('skips design when structure is null', () => {
     itemMap.set('custom-item', {
       type: 'custom-item',

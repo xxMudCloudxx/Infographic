@@ -86,7 +86,7 @@ export class Renderer implements IRenderer {
       });
 
       try {
-        observer.observe(document, {
+        observer.observe(this.options.container, {
           childList: true,
           subtree: true,
         });
